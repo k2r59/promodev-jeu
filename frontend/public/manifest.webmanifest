@@ -1,0 +1,18 @@
+{
+  "name": "Promodev — Le Jeu de l'Été",
+  "short_name": "Jeu de l'Été",
+  "description": "Un Match-3 estival ultra addictif. 2 minutes chrono, des combos qui explosent et 1 000 € à la clé !",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#8fd8ff",
+  "theme_color": "#39b6ff",
+  "lang": "fr",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
