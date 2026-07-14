@@ -13,7 +13,8 @@
     "dev": "npm-run-all --parallel dev:server dev:frontend",
     "build": "npm --prefix frontend run build",
     "install:all": "npm --prefix server install && npm --prefix frontend install",
-    "heroku-postbuild": "npm --prefix server install && npm --prefix frontend install && npm --prefix frontend run build"
+    "_comment_postbuild": "Heroku pose NODE_ENV=production, et npm saute alors les devDependencies. Or vite EN EST une : sans --include=dev le build échoue sur « vite: not found ». Le serveur, lui, n'a besoin que de ses dépendances de production (mongodb-memory-server est un outil de dev et n'a rien à faire dans le slug).",
+    "heroku-postbuild": "npm --prefix server install --omit=dev && npm --prefix frontend install --include=dev && npm --prefix frontend run build"
   },
   "devDependencies": {
     "npm-run-all": "^4.1.5"
