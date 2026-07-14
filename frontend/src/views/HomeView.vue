@@ -33,7 +33,7 @@ watch(
   },
   { immediate: true }
 )
-// Se déconnecter ramène à la vitrine, pas au formulaire : on ne réclame pas un
+// Se déconnecter ramène à l'accroche, pas au formulaire : on ne réclame pas un
 // compte à quelqu'un qui vient de partir.
 watch(
   () => auth.isAuth,
@@ -41,6 +41,11 @@ watch(
     if (!v) ui.authFormOpen = false
   }
 )
+// Quitter l'accueil referme le formulaire : en revenant, on retombe sur
+// l'accroche et c'est un clic volontaire (« Se connecter », le cadeau, ou
+// « C'est parti ») qui le rouvre. Sans ça il restait ouvert en travers du
+// chemin de quelqu'un qui n'avait fait que passer voir le classement.
+onUnmounted(() => (ui.authFormOpen = false))
 
 const challenges = ref([])
 const board = ref([])
@@ -186,16 +191,23 @@ onUnmounted(() => ro?.disconnect())
     <!-- Colonne gauche -->
     <aside class="col col--left">
       <!-- Bandeau récompense : visuel complet, le CTA est une zone cliquable posée
-           sur le bouton dessiné dans l'image. -->
+           sur le bouton dessiné dans l'image.
+           Déconnecté, il ouvre le formulaire : sur la page d'accroche c'est le
+           seul visuel qui donne envie, autant qu'il mène à l'inscription plutôt
+           que dans une impasse. Connecté, il fait ce qu'il annonce et emmène aux
+           récompenses. -->
       <div class="prize">
         <img
           class="prize__img"
           :src="imgPrize"
           alt="À gagner : 1 000 € de remise sur votre future opération promo !"
         />
-        <RouterLink to="/recompenses" class="prize__cta">
+        <RouterLink v-if="auth.isAuth" to="/recompenses" class="prize__cta">
           <span class="sr-only">En savoir plus sur les 1 000 € à gagner</span>
         </RouterLink>
+        <button v-else class="prize__cta" @click="ouvreFormulaire">
+          <span class="sr-only">Créer un compte pour tenter de gagner les 1 000 €</span>
+        </button>
       </div>
 
       <!-- Défis du jour -->
@@ -352,13 +364,19 @@ onUnmounted(() => ro?.disconnect())
   border-radius: var(--radius);
   filter: drop-shadow(0 8px 18px rgba(43, 45, 90, 0.22));
 }
-/* Calée sur le bouton « EN SAVOIR PLUS » dessiné dans le visuel. */
+/* Calée sur le bouton « EN SAVOIR PLUS » dessiné dans le visuel.
+   `background: none` : c'est tantôt un lien, tantôt un <button>, et un bouton
+   arrive avec un fond gris par défaut qui masquerait le visuel. */
 .prize__cta {
   position: absolute;
   left: 26%;
   top: 70%;
   width: 46.7%;
   height: 10.6%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
   border-radius: 999px;
   transition: transform 0.08s ease, box-shadow 0.15s ease;
 }

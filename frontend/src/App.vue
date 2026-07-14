@@ -7,6 +7,7 @@ import { useUiStore } from './stores/ui.js'
 import FeaturesBar from './components/FeaturesBar.vue'
 import SoundButton from './components/SoundButton.vue'
 import PlayerSheet from './components/PlayerSheet.vue'
+import InstallBanner from './components/InstallBanner.vue'
 import logoUrl from './assets/brand/logo.png'
 import icoAccueil from './assets/nav/accueil.png'
 import icoClassement from './assets/nav/classement.png'
@@ -133,6 +134,13 @@ function logout() {
         <span class="bottomnav__lbl">{{ n.label }}</span>
       </RouterLink>
     </nav>
+
+    <!-- Invite d'installation. Elle se tait d'elle-même hors mobile/tablette,
+         une fois installée, ou si on l'a refusée.
+         Jamais sur l'écran de jeu : il est cadré au pixel sur la fenêtre, et le
+         bandeau viendrait recouvrir le dock des boosters. Les autres écrans
+         défilent, il y a la place. -->
+    <InstallBanner v-if="!isGameScreen" />
 
     <!-- Un plateau dans 390px de haut n'a aucun sens : sur l'accueil (donc le
          jeu), on demande la rotation plutôt que de livrer un écran inutilisable.
