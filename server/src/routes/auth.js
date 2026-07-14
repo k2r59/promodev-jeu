@@ -17,6 +17,9 @@ const PASSWORD_MAX = 72
 // Tout ce qui n'est pas une chaîne devient chaîne vide : jamais un opérateur Mongo.
 const str = (v) => (typeof v === 'string' ? v.trim() : '')
 
+// Doit rester identique à celle de l'index pseudo_unique_ci (models/User.js).
+const PSEUDO_COLLATION = { locale: 'fr', strength: 2 }
+
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   try {
@@ -37,13 +40,20 @@ router.post('/register', async (req, res) => {
     if (Buffer.byteLength(password) > PASSWORD_MAX)
       return res.status(400).json({ error: `Le mot de passe ne peut pas dépasser ${PASSWORD_MAX} caractères.` })
 
-    // Facultatifs : on ne valide que s'ils sont remplis.
-    if (societe.length > 120) return res.status(400).json({ error: 'La raison sociale est trop longue (120 max).' })
+    // Obligatoire : le jeu qualifie des prospects professionnels.
+    if (societe.length < 2 || societe.length > 120)
+      return res.status(400).json({ error: 'La raison sociale doit faire entre 2 et 120 caractères.' })
+    // Seul champ facultatif : on ne le valide que s'il est rempli.
     if (telephone && !PHONE_RE.test(telephone))
       return res.status(400).json({ error: 'Numéro de téléphone invalide.' })
 
     const exists = await User.findOne({ email })
     if (exists) return res.status(409).json({ error: 'Un compte existe déjà avec cet e-mail.' })
+    // Même collation que l'index (cf. models/User.js) : sans elle, « Hervé »
+    // passerait ce test puis se ferait rejeter par l'index — une erreur 500 au
+    // lieu d'un message clair.
+    const pseudoPris = await User.findOne({ pseudo }).collation(PSEUDO_COLLATION)
+    if (pseudoPris) return res.status(409).json({ error: 'Ce pseudo est déjà pris.' })
 
     const user = new User({ pseudo, email, societe, telephone, avatar: avatar || '😎' })
     await user.setPassword(password)
@@ -52,6 +62,15 @@ router.post('/register', async (req, res) => {
     const token = signToken(user._id)
     res.status(201).json({ token, user: user.toPublic() })
   } catch (err) {
+    // Deux inscriptions simultanées passent les deux findOne puis se heurtent à
+    // l'index unique : c'est la base qui tranche, et c'est très bien. Reste à
+    // traduire son erreur brute en message lisible plutôt qu'en 500.
+    if (err && err.code === 11000) {
+      const champ = Object.keys(err.keyPattern || {})[0]
+      return res.status(409).json({
+        error: champ === 'pseudo' ? 'Ce pseudo est déjà pris.' : 'Un compte existe déjà avec cet e-mail.'
+      })
+    }
     console.error('register error', err)
     res.status(500).json({ error: 'Erreur serveur lors de l’inscription.' })
   }

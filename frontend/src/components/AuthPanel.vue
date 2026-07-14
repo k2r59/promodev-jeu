@@ -135,7 +135,7 @@ async function submit() {
           </div>
 
           <div class="field">
-            <label for="ap-societe">Société <span class="opt">facultatif</span></label>
+            <label for="ap-societe">Société</label>
             <input
               id="ap-societe"
               v-model="form.societe"
@@ -143,6 +143,7 @@ async function submit() {
               type="text"
               placeholder="Raison sociale"
               maxlength="120"
+              required
             />
           </div>
           <div class="field">
