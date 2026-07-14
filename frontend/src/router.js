@@ -2,21 +2,21 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from './stores/auth.js'
 
 import HomeView from './views/HomeView.vue'
-import PlayView from './views/PlayView.vue'
 import LeaderboardView from './views/LeaderboardView.vue'
 import ChallengesView from './views/ChallengesView.vue'
 import RewardsView from './views/RewardsView.vue'
 import HelpView from './views/HelpView.vue'
-import AuthView from './views/AuthView.vue'
 
+// Le jeu et le formulaire vivent désormais dans la colonne centrale de l'accueil :
+// ces deux URL n'ont plus d'écran propre mais restent valides (liens, favoris).
 const routes = [
   { path: '/', name: 'home', component: HomeView },
-  { path: '/jouer', name: 'play', component: PlayView, meta: { requiresAuth: true } },
+  { path: '/jouer', redirect: '/' },
+  { path: '/connexion', name: 'auth', redirect: '/' },
   { path: '/classement', name: 'leaderboard', component: LeaderboardView },
   { path: '/defis', name: 'challenges', component: ChallengesView, meta: { requiresAuth: true } },
   { path: '/recompenses', name: 'rewards', component: RewardsView },
   { path: '/aide', name: 'help', component: HelpView },
-  { path: '/connexion', name: 'auth', component: AuthView, meta: { guestOnly: true } },
   { path: '/:pathMatch(.*)*', redirect: '/' }
 ]
 
@@ -30,10 +30,8 @@ export const router = createRouter({
 
 router.beforeEach((to) => {
   const auth = useAuthStore()
+  // Les écrans protégés renvoient à l'accueil, qui affiche le formulaire.
   if (to.meta.requiresAuth && !auth.isAuth) {
-    return { name: 'auth', query: { redirect: to.fullPath } }
-  }
-  if (to.meta.guestOnly && auth.isAuth) {
     return { name: 'home' }
   }
 })

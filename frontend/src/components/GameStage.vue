@@ -1,12 +1,12 @@
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
-import GameBoard from '../components/GameBoard.vue'
+// Le jeu tel qu'il vit dans la colonne centrale du hub : HUD + plateau + overlays.
+// Le composant se dimensionne sur la hauteur qu'on lui donne (pas de scroll).
+import { ref, reactive, computed, onUnmounted } from 'vue'
+import GameBoard from './GameBoard.vue'
 import { api } from '../api/client.js'
 import { useAuthStore } from '../stores/auth.js'
 import { sfx } from '../game/sound.js'
 
-const router = useRouter()
 const auth = useAuthStore()
 
 const GAME_SECONDS = 120
@@ -99,18 +99,21 @@ function replay() {
   live.score = 0
   startGame()
 }
-function quit() {
-  router.push('/')
+// Le hub est déjà à l'écran : on revient simplement à l'écran d'accroche.
+function backToIntro() {
+  result.value = null
+  live.score = 0
+  timeLeft.value = GAME_SECONDS
+  phase.value = 'intro'
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
-onMounted(() => {})
 onUnmounted(() => clearInterval(timerId))
 </script>
 
 <template>
-  <div class="play">
+  <div class="stage">
     <!-- HUD -->
     <div class="hud card">
       <div class="hud__item">
@@ -132,7 +135,6 @@ onUnmounted(() => clearInterval(timerId))
     <div class="board-zone">
       <GameBoard ref="board" :active="isPlaying" @update="onUpdate" @floating="onFloating" />
 
-      <!-- Textes flottants -->
       <div class="floats">
         <transition-group name="floatup">
           <span v-for="f in floatings" :key="f.id" class="floattxt" :style="{ left: f.x + '%' }">{{ f.text }}</span>
@@ -187,7 +189,7 @@ onUnmounted(() => clearInterval(timerId))
 
           <div class="overlay__actions">
             <button class="btn btn--sea" @click="replay">🔁 Rejouer</button>
-            <button class="btn btn--ghost" @click="quit">Accueil</button>
+            <button class="btn btn--ghost" @click="backToIntro">Fermer</button>
             <RouterLink to="/classement" class="btn btn--sun">🏆 Classement</RouterLink>
           </div>
         </div>
@@ -197,21 +199,22 @@ onUnmounted(() => clearInterval(timerId))
 </template>
 
 <style scoped>
-.play {
+/* Colonne pleine hauteur : le HUD garde sa taille, le plateau prend le reste. */
+.stage {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  align-items: center;
-  padding-top: 16px;
-  max-width: 620px;
-  margin: 0 auto;
+  gap: 12px;
+  height: 100%;
+  min-height: 0;
 }
+/* Compact : chaque pixel repris ici va au plateau, qui est bridé par la hauteur. */
 .hud {
   display: flex;
   align-items: center;
   gap: 14px;
   width: 100%;
-  padding: 14px 18px;
+  padding: 8px 16px;
+  flex-shrink: 0;
 }
 .hud__item {
   display: flex;
@@ -251,9 +254,13 @@ onUnmounted(() => clearInterval(timerId))
   margin-bottom: 4px;
 }
 
+/* Zone qui absorbe la hauteur restante ; le plateau s'y inscrit en carré. */
 .board-zone {
   position: relative;
-  width: 100%;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  justify-content: center;
 }
 .floats {
   position: absolute;
@@ -301,14 +308,16 @@ onUnmounted(() => clearInterval(timerId))
 .overlay__card {
   background: #fff;
   border-radius: 24px;
-  padding: 26px 22px;
+  padding: 22px 20px;
   width: min(92%, 420px);
+  max-height: 100%;
+  overflow-y: auto;
   text-align: center;
   box-shadow: var(--shadow-lg);
   animation: pop-in 0.3s ease;
 }
 .overlay__emoji {
-  font-size: 3.4rem;
+  font-size: 3rem;
 }
 .overlay__card h2 {
   margin: 6px 0 8px;
@@ -387,12 +396,26 @@ onUnmounted(() => clearInterval(timerId))
   box-shadow: var(--shadow);
   animation: pop-in 0.4s ease backwards;
 }
+/* Une seule ligne, boutons fins : on écrase ici le relief épais des .btn du jeu
+   (spécificité 0,2,0 contre 0,1,0 pour .btn--sea/--sun, donc ça passe). */
 .overlay__actions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   justify-content: center;
-  flex-wrap: wrap;
-  margin-top: 8px;
+  flex-wrap: nowrap;
+  margin-top: 14px;
+}
+.overlay__actions .btn {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 11px 10px;
+  font-size: 0.86rem;
+  white-space: nowrap;
+  box-shadow: 0 3px 10px rgba(43, 45, 90, 0.18);
+}
+.overlay__actions .btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 6px rgba(43, 45, 90, 0.18);
 }
 .count-num {
   font-size: 8rem;

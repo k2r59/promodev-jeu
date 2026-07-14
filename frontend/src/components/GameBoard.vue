@@ -247,6 +247,12 @@ const boosterList = computed(() =>
 <template>
   <div class="gamewrap">
     <div class="board" :class="{ 'board--armed': armedBooster }">
+      <!-- Quadrillage : fixe, purement décoratif. Il vit sur le plateau et non
+           sur les tuiles, qui se déplacent et tombent par-dessus. -->
+      <div class="board__grid" aria-hidden="true">
+        <span v-for="i in 64" :key="i" class="board__cell"></span>
+      </div>
+
       <div
         v-for="t in tiles"
         :key="t.id"
@@ -259,8 +265,8 @@ const boosterList = computed(() =>
         @pointerdown="onPointerDown($event, t.r, t.c)"
         @pointerup="onPointerUp($event, t.r, t.c)"
       >
-        <span class="tile__face" :style="{ background: TILES[t.type].color }">
-          {{ TILES[t.type].emoji }}
+        <span class="tile__face">
+          <img class="tile__img" :src="TILES[t.type].img" :alt="TILES[t.type].label" draggable="false" />
         </span>
       </div>
 
@@ -300,11 +306,18 @@ const boosterList = computed(() =>
   flex-direction: column;
   gap: 12px;
   align-items: center;
+  height: 100%;
+  min-height: 0;
+  width: 100%;
 }
+/* La colonne reçoit une largeur ferme, calée sur la hauteur disponible
+   (fitCenter dans HomeView) : le plateau prend donc cette largeur et en déduit
+   sa hauteur. Surtout pas `flex: 1` ici — `aspect-ratio` ne sait pas réduire une
+   hauteur déjà fixée par le flex, et le plateau s'étirerait en rectangle. */
 .board {
   position: relative;
+  flex: none;
   width: 100%;
-  max-width: 560px;
   aspect-ratio: 1;
   border-radius: 22px;
   background: linear-gradient(160deg, #1f8fd4, #1666a8);
@@ -316,6 +329,21 @@ const boosterList = computed(() =>
 }
 .board--armed {
   box-shadow: inset 0 0 0 4px var(--sun), inset 0 4px 16px rgba(0, 0, 0, 0.28), var(--shadow-lg);
+}
+/* Aligné sur les tuiles : même retrait (padding 8px du plateau), même gouttière
+   (padding 3px de .tile) et même rayon que .tile__face. */
+.board__grid {
+  position: absolute;
+  inset: 8px;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  pointer-events: none;
+}
+.board__cell {
+  margin: 1.5px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.085);
 }
 .tile {
   position: absolute;
@@ -334,10 +362,15 @@ const boosterList = computed(() =>
   width: 100%;
   height: 100%;
   border-radius: 14px;
-  font-size: clamp(1.1rem, 5.4vw, 2rem);
-  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.12), inset 0 3px 0 rgba(255, 255, 255, 0.45), 0 2px 5px rgba(0, 0, 0, 0.2);
   transition: transform 0.12s ease, box-shadow 0.12s ease;
   animation: pop-in 0.25s ease backwards;
+}
+.tile__img {
+  width: 92%;
+  height: 92%;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.32));
 }
 .tile--selected .tile__face {
   transform: scale(1.12);
@@ -436,15 +469,15 @@ const boosterList = computed(() =>
   justify-content: center;
   flex-wrap: wrap;
 }
+/* Libellé à droite de l'icône plutôt qu'en dessous : la rangée est deux fois
+   moins haute, et toute la hauteur reprise ici va au plateau. */
 .booster {
   position: relative;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 2px;
-  width: 82px;
-  padding: 10px 6px 8px;
-  border-radius: 16px;
+  gap: 8px;
+  padding: 7px 14px 7px 11px;
+  border-radius: 14px;
   background: linear-gradient(180deg, #fff, #f3f6fc);
   box-shadow: var(--shadow);
   transition: transform 0.1s, box-shadow 0.15s;
@@ -478,8 +511,9 @@ const boosterList = computed(() =>
   border: 2px solid #fff;
 }
 .booster__label {
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   font-weight: 800;
   color: var(--ink-soft);
+  white-space: nowrap;
 }
 </style>

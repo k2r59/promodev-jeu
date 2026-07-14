@@ -1,15 +1,26 @@
 // Miroir visuel des définitions (le serveur reste la source de vérité pour les récompenses).
 
+import imgSoleil from '../assets/tiles/soleil.png'
+import imgBallon from '../assets/tiles/ballon.png'
+import imgGlace from '../assets/tiles/glace.png'
+import imgPasteque from '../assets/tiles/pasteque.png'
+import imgCoquillage from '../assets/tiles/coquillage.png'
+import imgEtoile from '../assets/tiles/etoile.png'
+import imgCocktail from '../assets/tiles/cocktail.png'
+import imgPalmier from '../assets/tiles/palmier.png'
+
 // Les tuiles "été". index = type.
+// `color` = teinte dominante de l'illustration (halo de sélection, fonds de démo).
+// `emoji` reste le repli si l'image ne charge pas.
 export const TILES = [
-  { key: 'soleil', emoji: '🌞', color: '#ffc93c' },
-  { key: 'ballon', emoji: '🏖️', color: '#ff6b6b' },
-  { key: 'glace', emoji: '🍦', color: '#ff9ff3' },
-  { key: 'pasteque', emoji: '🍉', color: '#ff5e78' },
-  { key: 'coquillage', emoji: '🐚', color: '#ffa8d2' },
-  { key: 'etoile', emoji: '⭐', color: '#ffd93d' },
-  { key: 'cocktail', emoji: '🥥', color: '#8b5a2b' },
-  { key: 'palmier', emoji: '🌴', color: '#2ecc71' }
+  { key: 'soleil', emoji: '🌞', color: '#ffc93c', img: imgSoleil, label: 'Soleil' },
+  { key: 'ballon', emoji: '🏖️', color: '#ff6b6b', img: imgBallon, label: 'Ballon de plage' },
+  { key: 'glace', emoji: '🍦', color: '#ff9f43', img: imgGlace, label: 'Glace' },
+  { key: 'pasteque', emoji: '🍉', color: '#ff5e78', img: imgPasteque, label: 'Pastèque' },
+  { key: 'coquillage', emoji: '🐚', color: '#a55eea', img: imgCoquillage, label: 'Coquillage' },
+  { key: 'etoile', emoji: '⭐', color: '#ff7f27', img: imgEtoile, label: 'Étoile de mer' },
+  { key: 'cocktail', emoji: '🥥', color: '#8b5a2b', img: imgCocktail, label: 'Cocktail coco' },
+  { key: 'palmier', emoji: '🌴', color: '#2ecc71', img: imgPalmier, label: 'Feuille tropicale' }
 ]
 
 // Boosters activables depuis l'inventaire.

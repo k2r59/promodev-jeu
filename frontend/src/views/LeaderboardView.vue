@@ -13,6 +13,7 @@ const loading = ref(true)
 const tabs = [
   { key: 'day', label: 'Jour' },
   { key: 'week', label: 'Semaine' },
+  { key: 'month', label: 'Mois' },
   { key: 'all', label: 'Général' }
 ]
 

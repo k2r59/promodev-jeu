@@ -36,7 +36,9 @@ import { TILES, BOOSTERS } from '../game/gameData.js'
     <div class="card">
       <div class="card__title"><span class="ico">🧩</span> Les tuiles de l'été</div>
       <div class="tiles-row">
-        <span v-for="t in TILES" :key="t.key" class="tile-demo" :style="{ background: t.color }">{{ t.emoji }}</span>
+        <span v-for="t in TILES" :key="t.key" class="tile-demo" :title="t.label">
+          <img class="tile-demo__img" :src="t.img" :alt="t.label" />
+        </span>
       </div>
     </div>
 
@@ -121,8 +123,14 @@ import { TILES, BOOSTERS } from '../game/gameData.js'
   border-radius: 14px;
   display: grid;
   place-items: center;
-  font-size: 1.8rem;
-  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.12), inset 0 3px 0 rgba(255, 255, 255, 0.45), var(--shadow);
+  background: linear-gradient(160deg, #2a9ee0, #1a72b4);
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.12), inset 0 3px 0 rgba(255, 255, 255, 0.25), var(--shadow);
+}
+.tile-demo__img {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
 }
 .boost-list {
   display: grid;

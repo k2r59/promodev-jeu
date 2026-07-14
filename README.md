@@ -101,7 +101,7 @@ Au déploiement, `heroku-postbuild` installe les dépendances et build le fronte
 | POST | `/api/game/session` | ✅ | Enregistrer une partie + récompenses |
 | GET | `/api/game/challenges` | ✅ | Défis du jour |
 | GET | `/api/game/badges` | ✅ | Badges du joueur |
-| GET | `/api/leaderboard?period=day\|week\|all` | – | Classements |
+| GET | `/api/leaderboard?period=day\|week\|month\|all` | – | Classements |
 
 ## 🛡️ Notes
 

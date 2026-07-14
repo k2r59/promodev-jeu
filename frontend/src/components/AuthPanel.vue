@@ -1,11 +1,10 @@
 <script setup>
+// Formulaire inscription/connexion tel qu'il s'affiche à la place du plateau,
+// dans la colonne centrale du hub. Occupe la même hauteur, sans scroll de page.
 import { ref, reactive } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth.js'
 
 const auth = useAuthStore()
-const router = useRouter()
-const route = useRoute()
 
 const mode = ref('register') // register | login
 const loading = ref(false)
@@ -23,7 +22,7 @@ async function submit() {
     } else {
       await auth.login({ email: form.email, password: form.password })
     }
-    router.push(route.query.redirect || '/jouer')
+    // Pas de navigation : le hub bascule tout seul sur le plateau.
   } catch (e) {
     error.value = e.message || 'Une erreur est survenue.'
   } finally {
@@ -33,13 +32,17 @@ async function submit() {
 </script>
 
 <template>
-  <div class="auth">
-    <div class="auth__card card">
-      <div class="auth__head">
-        <div class="auth__emoji float">⛱️</div>
+  <div class="apanel card">
+    <div class="apanel__scroll">
+      <div class="apanel__head">
+        <div class="apanel__emoji float">⛱️</div>
         <h1>{{ mode === 'register' ? 'Rejoindre le jeu' : 'Bon retour !' }}</h1>
         <p class="muted">
-          {{ mode === 'register' ? 'Créez votre compte pour jouer, gagner des badges et tenter les 1 000 €.' : 'Connectez-vous pour reprendre votre progression.' }}
+          {{
+            mode === 'register'
+              ? 'Créez votre compte pour jouer, gagner des badges et tenter les 1 000 €.'
+              : 'Connectez-vous pour reprendre votre progression.'
+          }}
         </p>
       </div>
 
@@ -87,7 +90,7 @@ async function submit() {
         </button>
       </form>
 
-      <p class="auth__foot muted">
+      <p class="apanel__foot muted">
         {{ mode === 'register' ? 'Déjà un compte ?' : 'Pas encore de compte ?' }}
         <button class="link-btn" @click="mode = mode === 'register' ? 'login' : 'register'">
           {{ mode === 'register' ? 'Se connecter' : "S'inscrire" }}
@@ -98,33 +101,41 @@ async function submit() {
 </template>
 
 <style scoped>
-.auth {
-  display: grid;
-  place-items: center;
-  padding: 30px 0;
-  min-height: 70vh;
+/* Occupe exactement la place du plateau. Si le formulaire dépasse (petite
+   fenêtre, mode inscription), c'est lui qui défile — jamais la page. */
+.apanel {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
 }
-.auth__card {
-  width: min(94vw, 440px);
-  padding: 28px 26px;
+.apanel__scroll {
+  overflow-y: auto;
+  padding: 22px 24px;
 }
-.auth__head {
+.apanel__head {
   text-align: center;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
-.auth__emoji {
-  font-size: 3rem;
+.apanel__emoji {
+  font-size: 2.6rem;
 }
-.auth__head h1 {
-  font-size: 1.7rem;
+.apanel__head h1 {
+  font-size: 1.6rem;
   margin: 6px 0;
+}
+.apanel__head p {
+  margin: 0;
+  font-size: 0.92rem;
 }
 .switch {
   display: flex;
   background: #eef1f8;
   border-radius: 999px;
   padding: 4px;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 .switch button {
   flex: 1;
@@ -157,9 +168,10 @@ async function submit() {
   box-shadow: 0 0 0 3px var(--sky);
   transform: scale(1.05);
 }
-.auth__foot {
+.apanel__foot {
   text-align: center;
-  margin-top: 16px;
+  margin-top: 14px;
+  margin-bottom: 0;
   font-size: 0.9rem;
 }
 .link-btn {

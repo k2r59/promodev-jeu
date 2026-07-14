@@ -1,30 +1,106 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { api } from '../api/client.js'
 import { useAuthStore } from '../stores/auth.js'
+import GameStage from '../components/GameStage.vue'
+import AuthPanel from '../components/AuthPanel.vue'
+import imgPrize from '../assets/blocks/prize.png'
 
 const auth = useAuthStore()
-const router = useRouter()
 
 const challenges = ref([])
 const board = ref([])
-const me = ref(null)
 const loading = ref(true)
 
-const topBadges = ['🥥', '🕶️', '🏄', '📸', '🔒']
+// --- Largeur de la colonne centrale ---------------------------------------
+// Le plateau est un carré piloté par la hauteur disponible. Sa colonne doit
+// épouser sa largeur, sinon les blocs latéraux restent à distance. Le CSS seul
+// n'y arrive pas : la colonne veut sa largeur du contenu, le plateau veut la
+// sienne de sa hauteur, que le flex ne résout qu'après — c'est circulaire.
+// On mesure donc la hauteur (qui, elle, ne dépend pas de la largeur).
+// Le formulaire reçoit la même largeur : il occupe exactement la même place.
+const centerEl = ref(null)
+const centerW = ref(null)
+let ro = null
+let lastH = 0
+
+const HUD_H = 71 // replis quand le formulaire est affiché (pas de HUD)
+const BOOSTERS_H = 69
+const GAPS = 24 // .stage (hud→zone) + .gamewrap (plateau→boosters)
+const SIDE_COLS = 340 * 2 + 16 * 2 // colonnes latérales + gouttières
+
+const isDesktopFit = () => window.matchMedia('(min-width: 861px) and (min-height: 620px)').matches
+
+function fitCenter() {
+  const el = centerEl.value
+  if (!el) return
+  if (!isDesktopFit()) {
+    centerW.value = null
+    lastH = 0
+    return
+  }
+  const h = el.clientHeight
+  if (!h || h === lastH) return // ignore nos propres changements de largeur
+  lastH = h
+  const hud = el.querySelector('.hud')?.offsetHeight || HUD_H
+  const boosters = el.querySelector('.boosters')?.offsetHeight || BOOSTERS_H
+  // Le plateau prend toute la hauteur restante, borné par la largeur encore
+  // libre une fois les colonnes latérales posées.
+  const byHeight = h - hud - boosters - GAPS
+  const byWidth = (el.parentElement?.clientWidth || 0) - SIDE_COLS
+  centerW.value = Math.round(Math.max(280, Math.min(byHeight, byWidth)))
+}
+
+const badges = ref([])
+
+// 5 badges max sur le hub ; la liste complète est sur /recompenses.
+const topBadges = computed(() => badges.value.slice(0, 5))
+
+// Teintes des hexagones, dans l'ordre de la maquette. Un badge verrouillé
+// reste gris quelle que soit sa position.
+const BADGE_TINTS = [
+  ['#5fd0f0', '#2ba7d4'],
+  ['#b98cf5', '#8b5ae0'],
+  ['#ffc93c', '#f59314'],
+  ['#5fd68f', '#27a862'],
+  ['#7fd3ff', '#39b6ff']
+]
+
+// Onglets du classement. Les clés sont celles de l'API (day|week|month|all).
+const LB_TABS = [
+  { key: 'week', label: 'Semaine' },
+  { key: 'month', label: 'Mois' },
+  { key: 'all', label: 'Général' }
+]
+const period = ref('week')
+
+async function loadBoard() {
+  // Top 5 strict : le hub n'affiche que le podium, le reste est sur /classement.
+  const lb = await api('/leaderboard', { query: { period: period.value, limit: 5 } })
+  board.value = lb.board
+}
+
+async function setPeriod(key) {
+  if (period.value === key) return
+  period.value = key
+  loading.value = true
+  try {
+    await loadBoard()
+  } catch (e) {
+    // silencieux : le hub reste utilisable
+  } finally {
+    loading.value = false
+  }
+}
 
 async function load() {
   loading.value = true
   try {
-    const lb = await api('/leaderboard', {
-      query: { period: 'week', limit: 5, me: auth.user?.id }
-    })
-    board.value = lb.board
-    me.value = lb.me
+    await loadBoard()
     if (auth.isAuth) {
-      const ch = await api('/game/challenges')
+      const [ch, bd] = await Promise.all([api('/game/challenges'), api('/game/badges')])
       challenges.value = ch.challenges
+      badges.value = bd.badges
     }
   } catch (e) {
     // silencieux : le hub reste utilisable
@@ -33,42 +109,52 @@ async function load() {
   }
 }
 
-function play() {
-  if (auth.isAuth) router.push('/jouer')
-  else router.push({ name: 'auth', query: { redirect: '/jouer' } })
-}
-
+// 3 défis max sur le hub ; la liste complète est sur /defis.
 const previewChallenges = computed(() => challenges.value.slice(0, 3))
+const isMe = (row) => !!auth.user && String(row.userId) === String(auth.user.id)
 
-onMounted(load)
+// Teintes des pastilles de défis, dans l'ordre de la maquette.
+const CHAL_TINTS = ['#ffe4c4', '#d4ecff', '#ffeeae']
+
+onMounted(() => {
+  load()
+  fitCenter()
+  ro = new ResizeObserver(fitCenter)
+  ro.observe(centerEl.value)
+})
+onUnmounted(() => ro?.disconnect())
 </script>
 
 <template>
   <div class="home">
     <!-- Colonne gauche -->
     <aside class="col col--left">
-      <!-- Bandeau récompense -->
-      <div class="prize card">
-        <div class="prize__tag">À GAGNER</div>
-        <div class="prize__amount">1 000 €</div>
-        <div class="prize__desc">de remise sur votre future opération promo !</div>
-        <RouterLink to="/recompenses" class="btn btn--sun btn--block">En savoir plus</RouterLink>
-        <div class="prize__deco">🦩🏄🌴</div>
+      <!-- Bandeau récompense : visuel complet, le CTA est une zone cliquable posée
+           sur le bouton dessiné dans l'image. -->
+      <div class="prize">
+        <img
+          class="prize__img"
+          :src="imgPrize"
+          alt="À gagner : 1 000 € de remise sur votre future opération promo !"
+        />
+        <RouterLink to="/recompenses" class="prize__cta">
+          <span class="sr-only">En savoir plus sur les 1 000 € à gagner</span>
+        </RouterLink>
       </div>
 
       <!-- Défis du jour -->
       <div class="card">
         <div class="card__title"><span class="ico">🏝️</span> Défis du jour</div>
         <template v-if="auth.isAuth && previewChallenges.length">
-          <div v-for="c in previewChallenges" :key="c.id" class="chal">
-            <span class="chal__ico">{{ c.icon }}</span>
+          <div v-for="(c, i) in previewChallenges" :key="c.id" class="chal">
+            <span class="chal__ico" :style="{ '--tint': CHAL_TINTS[i % CHAL_TINTS.length] }">{{ c.icon }}</span>
             <div class="chal__body">
               <div class="chal__label">{{ c.label }}</div>
               <div class="progress"><div class="progress__bar" :style="{ width: Math.round((c.progress / c.goal) * 100) + '%' }"></div></div>
             </div>
             <span class="chal__reward">{{ c.progress }}/{{ c.goal }} <b>💎{{ c.reward }}</b></span>
           </div>
-          <RouterLink to="/defis" class="btn btn--ghost btn--block" style="margin-top: 10px">Voir tous les défis</RouterLink>
+          <RouterLink to="/defis" class="btn btn--block ch-cta">Voir tous les défis</RouterLink>
         </template>
         <p v-else class="muted center" style="padding: 8px 0">
           Connectez-vous pour relever les défis quotidiens et gagner des gemmes !
@@ -76,52 +162,46 @@ onMounted(load)
       </div>
     </aside>
 
-    <!-- Colonne centrale -->
-    <section class="col col--center">
-      <div class="hero card">
-        <div class="hero__badges">🌞 🍦 🏖️ 🍉 ⭐ 🐚 🥥 🌴</div>
-        <h1 class="hero__title">Le Jeu de l'Été</h1>
-        <p class="hero__sub">Un Match-3 estival ultra addictif. 2 minutes chrono, des combos qui explosent et 1 000 € à la clé !</p>
-        <button class="btn btn--lg hero__play" @click="play">▶ Partie rapide</button>
-        <div v-if="!auth.isAuth" class="hero__hint">
-          Nouveau ? <RouterLink to="/connexion" class="link">Créez votre compte gratuit</RouterLink> pour jouer et grimper au classement.
-        </div>
-      </div>
-
-      <div class="features">
-        <div class="feature"><span>🌟</span><b>Simple & fun</b><small>Facile à jouer, difficile à lâcher</small></div>
-        <div class="feature"><span>🍦</span><b>Combos & boosters</b><small>Multiplicateurs x2, x3, x5…</small></div>
-        <div class="feature"><span>🏖️</span><b>Pour tous</b><small>Jouez quand vous voulez</small></div>
-        <div class="feature"><span>🎁</span><b>Récompenses</b><small>Badges, XP et 1 000 € de remise</small></div>
-      </div>
+    <!-- Colonne centrale : le jeu, ou le formulaire à sa place tant qu'on n'est
+         pas connecté. Les deux occupent exactement le même espace. -->
+    <section ref="centerEl" class="col col--center" :style="centerW ? { width: centerW + 'px' } : null">
+      <GameStage v-if="auth.isAuth" />
+      <AuthPanel v-else />
     </section>
 
     <!-- Colonne droite -->
     <aside class="col col--right">
       <!-- Classement -->
       <div class="card">
-        <div class="card__title"><span class="ico">🏆</span> Classement (semaine)</div>
+        <div class="card__title"><span class="ico">🏆</span> Classement</div>
+        <div class="lb-tabs" role="tablist">
+          <button
+            v-for="t in LB_TABS"
+            :key="t.key"
+            class="lb-tab"
+            :class="{ 'is-active': period === t.key }"
+            role="tab"
+            :aria-selected="period === t.key"
+            @click="setPeriod(t.key)"
+          >
+            {{ t.label }}
+          </button>
+        </div>
         <div v-if="loading" class="muted center">Chargement…</div>
         <template v-else>
           <div
             v-for="row in board"
             :key="row.userId"
             class="lb-row"
-            :class="{ 'lb-row--me': me && String(row.userId) === String(auth.user?.id) }"
+            :class="{ 'lb-row--me': isMe(row) }"
           >
             <span class="lb-rank" :data-rank="row.rank">{{ row.rank }}</span>
             <span class="lb-avatar">{{ row.avatar }}</span>
-            <span class="lb-name">{{ row.pseudo }}<em v-if="me && String(row.userId) === String(auth.user?.id)"> (vous)</em></span>
+            <span class="lb-name">{{ row.pseudo }}<em v-if="isMe(row)"> (vous)</em></span>
             <span class="lb-score">{{ row.score.toLocaleString('fr-FR') }} ⭐</span>
           </div>
-          <div v-if="me && !board.some((b) => String(b.userId) === String(auth.user?.id))" class="lb-row lb-row--me">
-            <span class="lb-rank">{{ me.rank }}</span>
-            <span class="lb-avatar">{{ me.avatar }}</span>
-            <span class="lb-name">{{ me.pseudo }} <em>(vous)</em></span>
-            <span class="lb-score">{{ me.score.toLocaleString('fr-FR') }} ⭐</span>
-          </div>
           <p v-if="!board.length" class="muted center">Soyez le premier à marquer des points !</p>
-          <RouterLink to="/classement" class="btn btn--ghost btn--block" style="margin-top: 10px">Voir le classement complet</RouterLink>
+          <RouterLink to="/classement" class="btn btn--block lb-cta">Voir le classement complet</RouterLink>
         </template>
       </div>
 
@@ -129,11 +209,28 @@ onMounted(load)
       <div class="card">
         <div class="card__title"><span class="ico">🏅</span> Badges</div>
         <div class="badges-preview">
-          <span v-for="(b, i) in topBadges" :key="i" class="badge-chip">{{ b }}</span>
+          <div
+            v-for="(b, i) in topBadges"
+            :key="b.key"
+            class="bdg"
+            :class="{ 'bdg--locked': !b.unlocked }"
+            :title="b.desc"
+          >
+            <span
+              class="bdg__hex"
+              :style="b.unlocked ? { '--hex-a': BADGE_TINTS[i][0], '--hex-b': BADGE_TINTS[i][1] } : null"
+              >{{ b.unlocked ? b.icon : '🔒' }}</span
+            >
+            <span class="bdg__lbl">{{ b.label }}</span>
+          </div>
+          <p v-if="!topBadges.length" class="muted center" style="padding: 8px 0; margin: 0">
+            Connectez-vous pour débloquer vos badges !
+          </p>
         </div>
-        <RouterLink to="/recompenses" class="btn btn--ghost btn--block" style="margin-top: 12px">Voir tous les badges</RouterLink>
+        <RouterLink to="/recompenses" class="btn btn--block lb-cta">Voir tous les badges</RouterLink>
       </div>
     </aside>
+
   </div>
 </template>
 
@@ -151,39 +248,76 @@ onMounted(load)
   gap: 16px;
 }
 
+/* Desktop : le hub occupe la hauteur donnée par le shell. Les colonnes latérales
+   défilent en interne si leur contenu déborde ; la page, elle, ne défile pas.
+   En flex (et non en grid), la colonne centrale se dimensionne sur son contenu :
+   le plateau étant bridé par la hauteur, les colonnes viennent se coller à lui
+   au lieu de laisser un vide de chaque côté. */
+@media (min-width: 861px) and (min-height: 620px) {
+  .home {
+    display: flex;
+    justify-content: center;
+    height: 100%;
+    min-height: 0;
+    align-items: stretch;
+    padding-top: 14px;
+  }
+  /* Le plateau étant bridé par la hauteur, la largeur donnée aux colonnes ne lui
+     est pas prise : elle serait perdue en marges. */
+  .col--left,
+  .col--right {
+    flex: 0 0 340px;
+  }
+  /* Largeur ajustée en JS sur le carré du plateau (voir fitCenter).
+     560px = repli avant la première mesure, pour que le HUD soit mesuré
+     à sa largeur réelle et non replié. */
+  .col--center {
+    flex: 0 0 auto;
+    width: 560px;
+  }
+  .col {
+    height: 100%;
+    min-height: 0;
+  }
+  .col--left,
+  .col--right {
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  .col--center {
+    overflow: hidden;
+  }
+}
+
 .prize {
-  background: linear-gradient(160deg, #ffd98a, #ffbe55);
-  text-align: center;
   position: relative;
-  overflow: hidden;
+  line-height: 0;
 }
-.prize__tag {
-  display: inline-block;
-  background: var(--coral);
-  color: #fff;
-  font-weight: 900;
-  padding: 4px 16px;
+.prize__img {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius);
+  filter: drop-shadow(0 8px 18px rgba(43, 45, 90, 0.22));
+}
+/* Calée sur le bouton « EN SAVOIR PLUS » dessiné dans le visuel. */
+.prize__cta {
+  position: absolute;
+  left: 26%;
+  top: 70%;
+  width: 46.7%;
+  height: 10.6%;
   border-radius: 999px;
-  font-size: 0.8rem;
-  letter-spacing: 1px;
+  transition: transform 0.08s ease, box-shadow 0.15s ease;
 }
-.prize__amount {
-  font-size: 3rem;
-  font-weight: 900;
-  color: #b23c00;
-  line-height: 1;
-  margin: 8px 0 4px;
-  text-shadow: 0 2px 0 #fff;
+.prize__cta:hover {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.85);
 }
-.prize__desc {
-  font-weight: 700;
-  color: #7a4b00;
-  margin-bottom: 14px;
-  font-size: 0.92rem;
+.prize__cta:active {
+  transform: translateY(2px);
 }
-.prize__deco {
-  font-size: 1.4rem;
-  margin-top: 12px;
+.prize__cta:focus-visible {
+  outline: 3px solid var(--sky);
+  outline-offset: 2px;
 }
 
 .chal {
@@ -193,13 +327,14 @@ onMounted(load)
   padding: 8px 0;
 }
 .chal__ico {
-  font-size: 1.5rem;
-  width: 40px;
-  height: 40px;
+  font-size: 1.7rem;
+  width: 52px;
+  height: 52px;
   display: grid;
   place-items: center;
-  background: #f3f6fc;
-  border-radius: 12px;
+  background: var(--tint, #f3f6fc);
+  border-radius: 15px;
+  box-shadow: inset 0 -2px 0 rgba(43, 45, 90, 0.07);
   flex-shrink: 0;
 }
 .chal__body {
@@ -223,69 +358,55 @@ onMounted(load)
   color: var(--sea);
 }
 
-.hero {
-  text-align: center;
-  background: linear-gradient(165deg, #ffffff, #eaf7ff);
+
+
+/* Onglets de période : piste claire, onglet actif en pastille rose. */
+.lb-tabs {
+  display: flex;
+  gap: 2px;
+  background: #eaf4fd;
+  border-radius: 999px;
+  padding: 3px;
+  margin-bottom: 10px;
 }
-.hero__badges {
-  font-size: 1.6rem;
-  letter-spacing: 4px;
-  margin-bottom: 8px;
-}
-.hero__title {
-  font-size: 2.4rem;
-  color: var(--ink);
-  background: linear-gradient(90deg, var(--coral), var(--sun));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-.hero__sub {
+.lb-tab {
+  flex: 1;
+  padding: 7px 4px;
+  border-radius: 999px;
+  background: transparent;
   color: var(--ink-soft);
-  font-weight: 600;
-  max-width: 440px;
-  margin: 10px auto 18px;
-}
-.hero__play {
-  font-size: 1.3rem;
-  padding: 18px 40px;
-}
-.hero__hint {
-  margin-top: 14px;
-  font-size: 0.88rem;
-  color: var(--ink-soft);
-  font-weight: 600;
-}
-.link {
-  color: var(--sky);
   font-weight: 800;
+  font-size: 0.8rem;
+  transition: background 0.15s, color 0.15s;
+}
+.lb-tab:hover:not(.is-active) {
+  color: var(--ink);
+}
+.lb-tab.is-active {
+  background: linear-gradient(180deg, var(--coral-2), var(--coral));
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(255, 94, 120, 0.4);
 }
 
-.features {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+/* CTA des cartes du hub : pastille pleine largeur, en capitales.
+   Rose pour le classement, bleu pour les défis — comme la maquette. */
+/* Pastilles plates et fines, sans le relief épais du .btn du jeu. */
+.lb-cta,
+.ch-cta {
+  margin-top: 10px;
+  padding: 11px 18px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.84rem;
+  box-shadow: 0 3px 10px rgba(43, 45, 90, 0.18);
 }
-.feature {
-  background: var(--card);
-  border-radius: var(--radius-sm);
-  padding: 14px 10px;
-  text-align: center;
-  box-shadow: var(--shadow);
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
+.lb-cta:active,
+.ch-cta:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 6px rgba(43, 45, 90, 0.18);
 }
-.feature span {
-  font-size: 1.8rem;
-}
-.feature b {
-  font-size: 0.9rem;
-}
-.feature small {
-  color: var(--ink-soft);
-  font-size: 0.72rem;
-  font-weight: 600;
+.ch-cta {
+  background: linear-gradient(180deg, #5cbdf5, #2e93e0);
 }
 
 .lb-row {
@@ -344,18 +465,49 @@ onMounted(load)
 
 .badges-preview {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   justify-content: space-between;
+  align-items: flex-start;
 }
-.badge-chip {
-  width: 48px;
-  height: 48px;
+.bdg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+.bdg__hex {
+  width: 100%;
+  max-width: 56px;
+  aspect-ratio: 1 / 1.09;
   display: grid;
   place-items: center;
-  font-size: 1.5rem;
-  background: linear-gradient(180deg, #fff, #eef3fb);
-  border-radius: 14px;
-  box-shadow: var(--shadow);
+  font-size: 1.4rem;
+  /* Hexagone pointe en haut, comme la maquette. */
+  clip-path: polygon(50% 0%, 96% 25%, 96% 75%, 50% 100%, 4% 75%, 4% 25%);
+  background: linear-gradient(160deg, var(--hex-a, #dfe5f2), var(--hex-b, #c3ccdf));
+  filter: drop-shadow(0 3px 5px rgba(43, 45, 90, 0.22));
+}
+.bdg__lbl {
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  text-align: center;
+  line-height: 1.15;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bdg--locked .bdg__hex {
+  filter: grayscale(1) drop-shadow(0 2px 4px rgba(43, 45, 90, 0.14));
+  opacity: 0.7;
+}
+.bdg--locked .bdg__lbl {
+  opacity: 0.65;
 }
 
 @media (max-width: 1080px) {
@@ -370,9 +522,6 @@ onMounted(load)
 @media (max-width: 720px) {
   .home {
     grid-template-columns: 1fr;
-  }
-  .features {
-    grid-template-columns: repeat(2, 1fr);
   }
   .hero__title {
     font-size: 2rem;

@@ -2,16 +2,23 @@
 import { computed } from 'vue'
 import { RouterView, RouterLink, useRouter } from 'vue-router'
 import { useAuthStore } from './stores/auth.js'
+import FeaturesBar from './components/FeaturesBar.vue'
+import logoUrl from './assets/brand/logo.png'
+import icoAccueil from './assets/nav/accueil.png'
+import icoClassement from './assets/nav/classement.png'
+import icoDefis from './assets/nav/defis.png'
+import icoRecompenses from './assets/nav/recompenses.png'
+import icoAide from './assets/nav/aide.png'
 
 const auth = useAuthStore()
 const router = useRouter()
 
 const nav = [
-  { to: '/', label: 'Accueil', icon: '🏝️' },
-  { to: '/classement', label: 'Classement', icon: '🏆' },
-  { to: '/defis', label: 'Défis', icon: '⭐' },
-  { to: '/recompenses', label: 'Récompenses', icon: '🎁' },
-  { to: '/aide', label: 'Aide', icon: '❓' }
+  { to: '/', label: 'Accueil', icon: icoAccueil },
+  { to: '/classement', label: 'Classement', icon: icoClassement },
+  { to: '/defis', label: 'Défis', icon: icoDefis },
+  { to: '/recompenses', label: 'Récompenses', icon: icoRecompenses },
+  { to: '/aide', label: 'Aide', icon: icoAide }
 ]
 
 const xpInLevel = computed(() => {
@@ -31,13 +38,12 @@ function logout() {
     <header class="topbar">
       <div class="topbar__inner container">
         <RouterLink to="/" class="brand">
-          <span class="brand__name">promo<span class="brand__accent">dev</span> <span class="brand__sun">☀️</span></span>
-          <span class="brand__sub">LE JEU DE L'ÉTÉ</span>
+          <img class="brand__logo" :src="logoUrl" alt="promodev — Le Jeu de l'Été" />
         </RouterLink>
 
         <nav class="mainnav">
           <RouterLink v-for="n in nav" :key="n.to" :to="n.to" class="mainnav__link" active-class="is-active">
-            <span class="mainnav__ico">{{ n.icon }}</span>
+            <img class="mainnav__ico" :src="n.icon" alt="" aria-hidden="true" />
             <span class="mainnav__lbl">{{ n.label }}</span>
           </RouterLink>
         </nav>
@@ -65,7 +71,7 @@ function logout() {
       </div>
     </header>
 
-    <main class="container">
+    <main class="app-main container">
       <RouterView v-slot="{ Component }">
         <transition name="fade" mode="out-in">
           <component :is="Component" />
@@ -73,10 +79,12 @@ function logout() {
       </RouterView>
     </main>
 
+    <FeaturesBar />
+
     <!-- Barre de navigation mobile -->
     <nav class="bottomnav">
       <RouterLink v-for="n in nav" :key="n.to" :to="n.to" class="bottomnav__link" active-class="is-active">
-        <span class="bottomnav__ico">{{ n.icon }}</span>
+        <img class="bottomnav__ico" :src="n.icon" alt="" aria-hidden="true" />
         <span class="bottomnav__lbl">{{ n.label }}</span>
       </RouterLink>
     </nav>
@@ -84,6 +92,32 @@ function logout() {
 </template>
 
 <style scoped>
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+/* Desktop : l'app tient dans l'écran, sans scroll de page. Le header et le
+   bandeau du bas gardent leur taille, `main` absorbe le reste (min-height:0 est
+   indispensable pour qu'un enfant flex puisse rétrécir sous son contenu).
+   Sous 620px de haut on repasse en page défilable : plus rien ne tiendrait. */
+@media (min-width: 861px) and (min-height: 620px) {
+  .app-shell {
+    height: 100dvh;
+    overflow: hidden;
+  }
+  .topbar {
+    flex-shrink: 0;
+  }
+  .app-main {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 14px;
+  }
+}
 .topbar {
   position: sticky;
   top: 0;
@@ -101,29 +135,14 @@ function logout() {
 }
 .brand {
   display: flex;
-  flex-direction: column;
-  line-height: 1;
+  align-items: center;
+  line-height: 0;
   flex-shrink: 0;
 }
-.brand__name {
-  font-size: 1.55rem;
-  font-weight: 900;
-  color: var(--ink);
+.brand__logo {
+  height: 46px;
+  width: auto;
 }
-.brand__accent {
-  color: var(--sky);
-}
-.brand__sun {
-  font-size: 1.1rem;
-}
-.brand__sub {
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 2px;
-  color: var(--coral);
-  margin-top: 2px;
-}
-
 .mainnav {
   display: flex;
   gap: 4px;
@@ -149,7 +168,10 @@ function logout() {
   box-shadow: var(--shadow);
 }
 .mainnav__ico {
-  font-size: 1.15rem;
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .topbar__right {
@@ -236,8 +258,8 @@ function logout() {
   .mainnav {
     display: none;
   }
-  .brand__sub {
-    display: none;
+  .brand__logo {
+    height: 34px;
   }
   .userchip__info {
     display: none;
@@ -270,7 +292,9 @@ function logout() {
     color: var(--coral);
   }
   .bottomnav__ico {
-    font-size: 1.3rem;
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
   }
   main.container {
     padding-bottom: 90px;

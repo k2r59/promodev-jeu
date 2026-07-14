@@ -16,6 +16,10 @@ function periodStart(period) {
     const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - day, 0, 0, 0))
     return monday
   }
+  if (period === 'month') {
+    // 1er du mois courant, 00:00 UTC
+    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0))
+  }
   return null // global
 }
 
@@ -42,10 +46,10 @@ async function bestPerUser(period, limit = 100) {
   ])
 }
 
-// GET /api/leaderboard?period=day|week|all&limit=100&me=<userId>
+// GET /api/leaderboard?period=day|week|month|all&limit=100&me=<userId>
 router.get('/', async (req, res) => {
   try {
-    const period = ['day', 'week', 'all'].includes(req.query.period) ? req.query.period : 'week'
+    const period = ['day', 'week', 'month', 'all'].includes(req.query.period) ? req.query.period : 'week'
     const limit = Math.min(Number(req.query.limit) || 100, 200)
     const rows = await bestPerUser(period, limit)
 
