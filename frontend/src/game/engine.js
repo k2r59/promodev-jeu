@@ -1,10 +1,22 @@
 // Moteur Match-3 pur (sans dépendance à Vue). Une grille est un tableau 2D
 // de cellules { id, type } où type est l'index dans TILES (ou null = vide).
+//
+// La grille n'est plus forcément carrée : en portrait (mobile/tablette) le
+// plateau est plus haut que large. Aucune fonction ne connaît donc de taille
+// fixe — toutes lisent les dimensions de la grille qu'on leur passe. C'est ce
+// qui évite un état global à synchroniser entre le moteur et l'affichage.
 
 import { TILES } from './gameData.js'
 
-export const SIZE = 8
+// Format paysage/desktop. Le portrait (7x9 = 63 cases) tient dans le même ordre
+// de grandeur : les scores restent comparables d'un appareil à l'autre, ce qui
+// compte puisqu'il n'y a qu'un seul classement.
+export const COLS = 8
+export const ROWS = 8
 export const TYPE_COUNT = TILES.length
+
+const rowsOf = (grid) => grid.length
+const colsOf = (grid) => grid[0].length
 
 let _idSeq = 1
 function nextId() {
@@ -20,13 +32,13 @@ function cell(type) {
 }
 
 // Crée une grille sans aucun alignement de départ, et garantissant qu'un coup existe.
-export function createGrid() {
+export function createGrid(cols = COLS, rows = ROWS) {
   let grid
   do {
     grid = []
-    for (let r = 0; r < SIZE; r++) {
+    for (let r = 0; r < rows; r++) {
       const row = []
-      for (let c = 0; c < SIZE; c++) {
+      for (let c = 0; c < cols; c++) {
         let t
         do {
           t = randType()
@@ -42,8 +54,8 @@ export function createGrid() {
   return grid
 }
 
-export function inBounds(r, c) {
-  return r >= 0 && r < SIZE && c >= 0 && c < SIZE
+export function inBounds(grid, r, c) {
+  return r >= 0 && r < rowsOf(grid) && c >= 0 && c < colsOf(grid)
 }
 
 export function areAdjacent(a, b) {
@@ -59,13 +71,15 @@ export function swap(grid, a, b) {
 // Renvoie un Set de clés "r,c" faisant partie d'un alignement >= 3.
 export function findMatches(grid) {
   const matched = new Set()
+  const rows = rowsOf(grid)
+  const cols = colsOf(grid)
 
   // Horizontal
-  for (let r = 0; r < SIZE; r++) {
+  for (let r = 0; r < rows; r++) {
     let run = 1
-    for (let c = 1; c <= SIZE; c++) {
+    for (let c = 1; c <= cols; c++) {
       const same =
-        c < SIZE &&
+        c < cols &&
         grid[r][c] &&
         grid[r][c - 1] &&
         grid[r][c].type !== null &&
@@ -81,11 +95,11 @@ export function findMatches(grid) {
     }
   }
   // Vertical
-  for (let c = 0; c < SIZE; c++) {
+  for (let c = 0; c < cols; c++) {
     let run = 1
-    for (let r = 1; r <= SIZE; r++) {
+    for (let r = 1; r <= rows; r++) {
       const same =
-        r < SIZE &&
+        r < rows &&
         grid[r] &&
         grid[r][c] &&
         grid[r - 1][c] &&
@@ -112,15 +126,25 @@ export function swapMakesMatch(grid, a, b) {
   return ok
 }
 
-// Existe-t-il au moins un coup gagnant ?
-export function hasAnyMove(grid) {
-  for (let r = 0; r < SIZE; r++) {
-    for (let c = 0; c < SIZE; c++) {
-      if (c < SIZE - 1 && swapMakesMatch(grid, { r, c }, { r, c: c + 1 })) return true
-      if (r < SIZE - 1 && swapMakesMatch(grid, { r, c }, { r: r + 1, c })) return true
+// Premier coup gagnant trouvé, sous la forme { a, b }, ou null s'il n'y en a
+// aucun. Sert à deux choses : détecter un plateau bloqué, et proposer un indice.
+export function findAnyMove(grid) {
+  const rows = rowsOf(grid)
+  const cols = colsOf(grid)
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (c < cols - 1 && swapMakesMatch(grid, { r, c }, { r, c: c + 1 }))
+        return { a: { r, c }, b: { r, c: c + 1 } }
+      if (r < rows - 1 && swapMakesMatch(grid, { r, c }, { r: r + 1, c }))
+        return { a: { r, c }, b: { r: r + 1, c } }
     }
   }
-  return false
+  return null
+}
+
+// Existe-t-il au moins un coup gagnant ?
+export function hasAnyMove(grid) {
+  return findAnyMove(grid) !== null
 }
 
 // Marque les cellules comme vides (type = null).
@@ -135,9 +159,11 @@ export function clearCells(grid, keys) {
 // Réutilise les objets existants (id stable) pour l'animation ; crée de
 // nouveaux ids pour les tuiles neuves.
 export function collapse(grid) {
-  for (let c = 0; c < SIZE; c++) {
-    let write = SIZE - 1
-    for (let r = SIZE - 1; r >= 0; r--) {
+  const rows = rowsOf(grid)
+  const cols = colsOf(grid)
+  for (let c = 0; c < cols; c++) {
+    let write = rows - 1
+    for (let r = rows - 1; r >= 0; r--) {
       if (grid[r][c].type !== null) {
         if (write !== r) {
           grid[write][c] = grid[r][c]
@@ -155,20 +181,21 @@ export function collapse(grid) {
 // Zones ciblées par les boosters (renvoie un Set de clés).
 export function boosterCells(grid, booster, r, c) {
   const keys = new Set()
+  const rows = rowsOf(grid)
+  const cols = colsOf(grid)
   if (booster === 'bombe') {
     for (let dr = -1; dr <= 1; dr++)
       for (let dc = -1; dc <= 1; dc++) {
-        if (inBounds(r + dr, c + dc)) keys.add(`${r + dr},${c + dc}`)
+        if (inBounds(grid, r + dr, c + dc)) keys.add(`${r + dr},${c + dc}`)
       }
   } else if (booster === 'eclair') {
-    for (let k = 0; k < SIZE; k++) {
-      keys.add(`${r},${k}`)
-      keys.add(`${k},${c}`)
-    }
+    // Toute la ligne et toute la colonne : leurs longueurs diffèrent en portrait.
+    for (let cc = 0; cc < cols; cc++) keys.add(`${r},${cc}`)
+    for (let rr = 0; rr < rows; rr++) keys.add(`${rr},${c}`)
   } else if (booster === 'vague') {
     const t = grid[r][c].type
-    for (let rr = 0; rr < SIZE; rr++)
-      for (let cc = 0; cc < SIZE; cc++) {
+    for (let rr = 0; rr < rows; rr++)
+      for (let cc = 0; cc < cols; cc++) {
         if (grid[rr][cc].type === t) keys.add(`${rr},${cc}`)
       }
   }
@@ -177,14 +204,17 @@ export function boosterCells(grid, booster, r, c) {
 
 // Mélange la grille tout en évitant les alignements immédiats.
 export function reshuffle(grid) {
+  const rows = rowsOf(grid)
+  const cols = colsOf(grid)
   const types = []
-  for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) types.push(grid[r][c].type)
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) types.push(grid[r][c].type)
   do {
     for (let i = types.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1))
       ;[types[i], types[j]] = [types[j], types[i]]
     }
     let idx = 0
-    for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) grid[r][c] = { id: grid[r][c].id, type: types[idx++] }
+    for (let r = 0; r < rows; r++)
+      for (let c = 0; c < cols; c++) grid[r][c] = { id: grid[r][c].id, type: types[idx++] }
   } while (findMatches(grid).size > 0 || !hasAnyMove(grid))
 }

@@ -2,12 +2,17 @@
 // Le jeu tel qu'il vit dans la colonne centrale du hub : HUD + plateau + overlays.
 // Le composant se dimensionne sur la hauteur qu'on lui donne (pas de scroll).
 import { ref, reactive, computed, onUnmounted } from 'vue'
+import { Star, Timer, Gem, RotateCw, Trophy } from 'lucide-vue-next'
 import GameBoard from './GameBoard.vue'
+import SoundButton from './SoundButton.vue'
+import PlayerSheet from './PlayerSheet.vue'
 import { api } from '../api/client.js'
 import { useAuthStore } from '../stores/auth.js'
+import { useUiStore } from '../stores/ui.js'
 import { sfx } from '../game/sound.js'
 
 const auth = useAuthStore()
+const ui = useUiStore()
 
 const GAME_SECONDS = 120
 const OBJECTIVE = 3000
@@ -114,26 +119,43 @@ onUnmounted(() => clearInterval(timerId))
 
 <template>
   <div class="stage">
-    <!-- HUD -->
+    <!-- HUD. En portrait c'est la seule barre de l'écran : elle porte donc aussi
+         le profil, les gemmes et le son, que le shell n'affiche plus. -->
     <div class="hud card">
-      <div class="hud__item">
+      <PlayerSheet v-if="ui.portrait" class="hud__player" />
+
+      <div class="hud__item hud__item--score">
         <span class="hud__lbl">Score</span>
-        <span class="hud__val hud__val--score">⭐ {{ live.score.toLocaleString('fr-FR') }}</span>
+        <span class="hud__val hud__val--score">
+          <Star :size="17" fill="currentColor" aria-hidden="true" />{{ live.score.toLocaleString('fr-FR') }}
+        </span>
       </div>
-      <div class="hud__item">
+      <div class="hud__item hud__item--time">
         <span class="hud__lbl">Temps</span>
-        <span class="hud__val hud__val--time" :class="{ 'is-low': timeLeft <= 10 && isPlaying }">⏱️ {{ timeStr }}</span>
+        <span class="hud__val hud__val--time" :class="{ 'is-low': timeLeft <= 10 && isPlaying }">
+          <Timer :size="17" aria-hidden="true" />{{ timeStr }}
+        </span>
       </div>
       <div class="hud__item hud__item--obj">
         <span class="hud__lbl">Objectif</span>
         <span class="hud__obj-txt">Atteindre {{ OBJECTIVE.toLocaleString('fr-FR') }} points</span>
-        <div class="progress progress--sun"><div class="progress__bar" :style="{ width: objectivePct + '%' }"></div></div>
+        <div class="progress progress--sun">
+          <div class="progress__bar" :style="{ width: objectivePct + '%' }"></div>
+        </div>
+        <span class="sr-only">{{ objectivePct }} % de l'objectif</span>
       </div>
+
+      <template v-if="ui.portrait">
+        <div class="hud__gems">
+          <Gem :size="15" aria-hidden="true" />{{ auth.user?.gems ?? 0 }}
+        </div>
+        <SoundButton class="hud__snd" />
+      </template>
     </div>
 
     <!-- Plateau -->
     <div class="board-zone">
-      <GameBoard ref="board" :active="isPlaying" @update="onUpdate" @floating="onFloating" />
+      <GameBoard ref="board" :active="isPlaying" :portrait="ui.portrait" @update="onUpdate" @floating="onFloating" />
 
       <div class="floats">
         <transition-group name="floatup">
@@ -188,9 +210,9 @@ onUnmounted(() => clearInterval(timerId))
           </template>
 
           <div class="overlay__actions">
-            <button class="btn btn--sea" @click="replay">🔁 Rejouer</button>
+            <button class="btn btn--sea" @click="replay"><RotateCw :size="15" aria-hidden="true" /> Rejouer</button>
             <button class="btn btn--ghost" @click="backToIntro">Fermer</button>
-            <RouterLink to="/classement" class="btn btn--sun">🏆 Classement</RouterLink>
+            <RouterLink to="/classement" class="btn btn--sun"><Trophy :size="15" aria-hidden="true" /> Classement</RouterLink>
           </div>
         </div>
       </div>
@@ -207,13 +229,16 @@ onUnmounted(() => clearInterval(timerId))
   height: 100%;
   min-height: 0;
 }
-/* Compact : chaque pixel repris ici va au plateau, qui est bridé par la hauteur. */
+/* Hauteur fixe (--hud-h) : fitCenter s'en sert pour donner au formulaire
+   exactement la largeur du jeu. Ne pas la remplacer par une hauteur auto. */
 .hud {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 14px;
   width: 100%;
-  padding: 8px 16px;
+  height: var(--hud-h);
+  padding: 0 16px;
   flex-shrink: 0;
 }
 .hud__item {
@@ -233,11 +258,18 @@ onUnmounted(() => clearInterval(timerId))
   color: var(--ink-soft);
 }
 .hud__val {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   font-size: 1.3rem;
   font-weight: 900;
+  font-variant-numeric: tabular-nums;
 }
 .hud__val--score {
   color: var(--coral);
+}
+.hud__val--time {
+  color: var(--sea);
 }
 .hud__val--time.is-low {
   color: var(--coral);
@@ -437,6 +469,95 @@ onUnmounted(() => clearInterval(timerId))
   100% {
     transform: scale(0.7);
     opacity: 0;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Écran de jeu portrait (mobile + tablette)
+   La barre du site s'efface : ce HUD devient la seule barre de l'écran. Il
+   récupère donc le profil, les gemmes et le son, sans grandir pour autant —
+   chaque pixel qu'il ne prend pas revient au plateau.
+   --------------------------------------------------------------------------- */
+@media (orientation: portrait) and (max-width: 1100px) {
+  .stage {
+    gap: 8px;
+  }
+  .hud {
+    gap: 10px;
+    padding: 0 12px 8px;
+    border-radius: 0 0 var(--radius) var(--radius);
+  }
+  .hud__lbl {
+    display: none; /* « SCORE » au-dessus d'une étoile et d'un nombre : redondant */
+  }
+  .hud__val {
+    font-size: 1.15rem;
+  }
+  /* L'objectif perd son texte et devient un liseré sur toute la largeur, calé
+     en bas de la carte : l'information reste, la hauteur part au plateau. */
+  .hud__item--obj {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 6px;
+    min-width: 0;
+    flex: none;
+  }
+  .hud__obj-txt {
+    display: none;
+  }
+  .hud__item--obj .progress {
+    height: 5px;
+  }
+  .hud__item--score {
+    flex: 1;
+    min-width: 0;
+  }
+  .hud__gems {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: #eaf7ff;
+    color: var(--sea);
+    font-weight: 900;
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+  /* Le bouton son du HUD est plus discret que celui du header : ici il n'est
+     pas l'élément principal, il ne doit pas concurrencer le score. */
+  .hud__snd :deep(.snd__btn) {
+    width: 34px;
+    height: 34px;
+    box-shadow: none;
+    background: #f3f6fc;
+  }
+
+  /* Les overlays couvrent le plateau : sur un écran étroit ils prennent presque
+     toute la largeur, et le contenu défile si la partie a beaucoup à raconter. */
+  .overlay__card {
+    width: min(94%, 420px);
+    padding: 20px 16px;
+  }
+  .overlay__emoji {
+    font-size: 2.4rem;
+  }
+  .final-score {
+    font-size: 2.2rem;
+    margin: 4px 0 12px;
+  }
+  .gain {
+    min-width: 72px;
+    padding: 8px 11px;
+  }
+  .overlay__actions .btn {
+    padding: 12px 6px;
+    font-size: 0.8rem;
+  }
+  .count-num {
+    font-size: 6rem;
   }
 }
 </style>

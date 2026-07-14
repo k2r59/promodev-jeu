@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
+import { Hourglass } from 'lucide-vue-next'
 import { api } from '../api/client.js'
 import { useAuthStore } from '../stores/auth.js'
 
@@ -42,22 +43,24 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="lb">
-    <div class="lb__head card">
-      <h1>🏆 Classement</h1>
-      <p class="muted">
-        Seul votre <b>meilleur score</b> est conservé. En fin d'opération, les
-        <b>100 meilleurs</b> deviennent finalistes pour le tirage au sort des 1 000 € !
-        <span v-if="daysLeft !== null" class="pill pill--days">⏳ {{ daysLeft }} jours restants</span>
-      </p>
-      <div class="tabs">
-        <button v-for="t in tabs" :key="t.key" :class="{ active: period === t.key }" @click="period = t.key">
-          {{ t.label }}
-        </button>
+  <div class="lb page">
+    <div class="card page__card">
+      <div class="lb__head">
+        <h1>Classement</h1>
+        <p class="muted">
+          Seul votre <b>meilleur score</b> est conservé. En fin d'opération, les
+          <b>100 meilleurs</b> deviennent finalistes pour le tirage au sort des 1 000 € !
+          <span v-if="daysLeft !== null" class="pill pill--days">
+            <Hourglass :size="13" aria-hidden="true" /> {{ daysLeft }} jours restants
+          </span>
+        </p>
+        <div class="tabs">
+          <button v-for="t in tabs" :key="t.key" :class="{ active: period === t.key }" @click="period = t.key">
+            {{ t.label }}
+          </button>
+        </div>
       </div>
-    </div>
 
-    <div class="card">
       <div v-if="loading" class="muted center" style="padding: 30px">Chargement du classement…</div>
       <div v-else-if="!board.length" class="muted center" style="padding: 30px">
         Aucun score pour cette période. À vous de jouer ! 🏄
@@ -91,7 +94,7 @@ onMounted(load)
         <span class="row__score">{{ me.score.toLocaleString('fr-FR') }} ⭐</span>
       </div>
       <p v-else-if="!auth.isAuth" class="muted center" style="margin-top: 14px">
-        <RouterLink to="/connexion" class="link">Connectez-vous</RouterLink> pour apparaître dans le classement.
+        <RouterLink :to="{ path: '/', query: { mode: 'connexion' } }" class="link">Connectez-vous</RouterLink> pour apparaître dans le classement.
       </p>
     </div>
   </div>
@@ -99,12 +102,12 @@ onMounted(load)
 
 <style scoped>
 .lb {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding-top: 18px;
   max-width: 780px;
   margin: 0 auto;
+  width: 100%;
+}
+.lb__head {
+  margin-bottom: 16px;
 }
 .lb__head h1 {
   font-size: 1.8rem;

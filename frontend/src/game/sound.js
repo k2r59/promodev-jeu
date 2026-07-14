@@ -1,6 +1,7 @@
 // Effets sonores générés via la Web Audio API (aucun asset externe requis).
 let ctx = null
-let enabled = true
+// Volume maître des effets, 0 → 1. Piloté par le store audio.
+let volume = 0
 
 function ac() {
   if (!ctx) {
@@ -11,15 +12,15 @@ function ac() {
   return ctx
 }
 
-export function setSoundEnabled(v) {
-  enabled = v
+export function setSfxVolume(v) {
+  volume = Math.max(0, Math.min(1, Number(v) || 0))
 }
-export function isSoundEnabled() {
-  return enabled
+export function getSfxVolume() {
+  return volume
 }
 
 function tone({ freq = 440, dur = 0.12, type = 'sine', gain = 0.15, slide = 0 }) {
-  if (!enabled) return
+  if (volume <= 0) return
   const c = ac()
   if (!c) return
   const osc = c.createOscillator()
@@ -27,7 +28,8 @@ function tone({ freq = 440, dur = 0.12, type = 'sine', gain = 0.15, slide = 0 })
   osc.type = type
   osc.frequency.setValueAtTime(freq, c.currentTime)
   if (slide) osc.frequency.exponentialRampToValueAtTime(Math.max(40, freq + slide), c.currentTime + dur)
-  g.gain.setValueAtTime(gain, c.currentTime)
+  // exponentialRampToValueAtTime n'accepte pas 0 : on part d'un gain non nul.
+  g.gain.setValueAtTime(Math.max(0.0001, gain * volume), c.currentTime)
   g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur)
   osc.connect(g).connect(c.destination)
   osc.start()

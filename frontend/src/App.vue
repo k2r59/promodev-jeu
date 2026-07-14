@@ -1,8 +1,12 @@
 <script setup>
 import { computed } from 'vue'
-import { RouterView, RouterLink, useRouter } from 'vue-router'
+import { RouterView, RouterLink, useRouter, useRoute } from 'vue-router'
+import { LogOut, Gem } from 'lucide-vue-next'
 import { useAuthStore } from './stores/auth.js'
+import { useUiStore } from './stores/ui.js'
 import FeaturesBar from './components/FeaturesBar.vue'
+import SoundButton from './components/SoundButton.vue'
+import PlayerSheet from './components/PlayerSheet.vue'
 import logoUrl from './assets/brand/logo.png'
 import icoAccueil from './assets/nav/accueil.png'
 import icoClassement from './assets/nav/classement.png'
@@ -11,7 +15,25 @@ import icoRecompenses from './assets/nav/recompenses.png'
 import icoAide from './assets/nav/aide.png'
 
 const auth = useAuthStore()
+const ui = useUiStore()
 const router = useRouter()
+const route = useRoute()
+
+// En portrait, l'accueil n'est pas une page qui contient un jeu : c'est le jeu.
+// La barre du site s'efface donc (le HUD reprend profil, gemmes et son), et le
+// bandeau d'arguments avec elle — c'est du décor de vitrine, pas de jeu.
+//
+// La nav du bas, elle, reste : la retirer pendant la partie ne rendait rien au
+// plateau (il est borné par la largeur, pas par la hauteur — mesuré : 374x641
+// dans les deux cas) et enfermait le joueur deux minutes sans porte de sortie.
+//
+// `isAuth` est essentiel : déconnecté, l'accueil n'est pas un jeu mais un
+// formulaire. Il lui faut la barre du site (logo, son) et une page qui défile —
+// enfermé dans une hauteur fixe, ses derniers champs devenaient inatteignables.
+const isGameScreen = computed(() => ui.portrait && route.path === '/' && auth.isAuth)
+// Le hub écarte ses colonnes jusqu'aux bords de la fenêtre : tout ce qu'elles
+// ne prennent pas revient au plateau, qui est collé entre elles.
+const isHub = computed(() => route.path === '/')
 
 const nav = [
   { to: '/', label: 'Accueil', icon: icoAccueil },
@@ -34,22 +56,39 @@ function logout() {
 </script>
 
 <template>
-  <div class="app-shell">
-    <header class="topbar">
+  <div class="app-shell" :class="{ 'app-shell--game': isGameScreen, 'app-shell--hub': isHub }">
+    <header v-if="!isGameScreen" class="topbar">
       <div class="topbar__inner container">
         <RouterLink to="/" class="brand">
           <img class="brand__logo" :src="logoUrl" alt="promodev — Le Jeu de l'Été" />
         </RouterLink>
 
+        <!-- title/aria-label : entre 861 et 1080px le libellé est masqué en CSS
+             (donc retiré aussi de l'arbre d'accessibilité), il ne reste que
+             l'icône. Le nom doit rester lisible autrement. -->
         <nav class="mainnav">
-          <RouterLink v-for="n in nav" :key="n.to" :to="n.to" class="mainnav__link" active-class="is-active">
+          <RouterLink
+            v-for="n in nav"
+            :key="n.to"
+            :to="n.to"
+            class="mainnav__link"
+            active-class="is-active"
+            :title="n.label"
+            :aria-label="n.label"
+          >
             <img class="mainnav__ico" :src="n.icon" alt="" aria-hidden="true" />
             <span class="mainnav__lbl">{{ n.label }}</span>
           </RouterLink>
         </nav>
 
         <div class="topbar__right">
+          <SoundButton />
           <template v-if="auth.isAuth">
+            <!-- Deux formes du même profil, choisies en CSS. Sur mobile la puce
+                 complète ne rentre pas (mesuré : 31px de trop sur un écran de
+                 320), et son niveau/XP y étaient de toute façon masqués. La
+                 fiche, elle, tient dans un avatar et rend tout au tap. -->
+            <PlayerSheet class="topbar__player" />
             <div class="userchip">
               <div class="userchip__avatar">{{ auth.user.avatar || '😎' }}</div>
               <div class="userchip__info">
@@ -57,15 +96,21 @@ function logout() {
                 <div class="userchip__level">Niveau {{ auth.user.level }}</div>
                 <div class="xpbar"><div class="xpbar__fill" :style="{ width: xpPct + '%' }"></div></div>
               </div>
-              <button class="userchip__logout" title="Se déconnecter" @click="logout">⎋</button>
+              <button class="userchip__logout" title="Se déconnecter" aria-label="Se déconnecter" @click="logout">
+                <LogOut :size="15" aria-hidden="true" />
+              </button>
             </div>
             <div class="gems">
-              <span class="gems__ico">💎</span>
+              <Gem :size="17" aria-hidden="true" />
               <span class="gems__val">{{ auth.user.gems }}</span>
             </div>
           </template>
           <template v-else>
-            <RouterLink to="/connexion" class="btn btn--sun">Se connecter</RouterLink>
+            <!-- Le formulaire est déjà au centre : ce bouton l'ouvre sur l'onglet
+                 Connexion plutôt que de naviguer vers une page qui n'existe plus. -->
+            <RouterLink :to="{ path: '/', query: { mode: 'connexion' } }" class="btn btn--sun topbar__login">
+              Se connecter
+            </RouterLink>
           </template>
         </div>
       </div>
@@ -79,7 +124,7 @@ function logout() {
       </RouterView>
     </main>
 
-    <FeaturesBar />
+    <FeaturesBar v-if="!isGameScreen" />
 
     <!-- Barre de navigation mobile -->
     <nav class="bottomnav">
@@ -88,6 +133,17 @@ function logout() {
         <span class="bottomnav__lbl">{{ n.label }}</span>
       </RouterLink>
     </nav>
+
+    <!-- Un plateau dans 390px de haut n'a aucun sens : sur l'accueil (donc le
+         jeu), on demande la rotation plutôt que de livrer un écran inutilisable.
+         Les autres pages, elles, se lisent très bien en paysage. -->
+    <div v-if="route.path === '/'" class="rotate">
+      <div class="rotate__card">
+        <img class="rotate__ico" :src="icoAccueil" alt="" aria-hidden="true" />
+        <b>Tournez votre téléphone</b>
+        <span>Le Jeu de l'Été se joue à la verticale.</span>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -98,11 +154,40 @@ function logout() {
   min-height: 100dvh;
 }
 
+/* Écran de jeu portrait : le shell est cadré sur la fenêtre au pixel près, et
+   `main` prend tout ce que le HUD et la nav laissent. Rien ne défile — un
+   plateau qui glisse sous le doigt pendant qu'on vise une tuile est le pire
+   bug tactile qui soit (d'où aussi le touch-action:none du plateau). */
+@media (orientation: portrait) and (max-width: 1100px) {
+  .app-shell--game {
+    height: 100dvh;
+    overflow: hidden;
+  }
+  .app-shell--game .app-main {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    /* Encoche en haut : le HUD passe dessous, le dégradé de plage occupe la
+       bande. La nav du bas étant fixed, la réserve du bas l'empêche de
+       recouvrir le dock des boosters. */
+    padding: env(safe-area-inset-top) 0 var(--nav-h);
+  }
+}
+
 /* Desktop : l'app tient dans l'écran, sans scroll de page. Le header et le
    bandeau du bas gardent leur taille, `main` absorbe le reste (min-height:0 est
    indispensable pour qu'un enfant flex puisse rétrécir sous son contenu).
-   Sous 620px de haut on repasse en page défilable : plus rien ne tiendrait. */
-@media (min-width: 861px) and (min-height: 620px) {
+   Sous 620px de haut on repasse en page défilable : plus rien ne tiendrait.
+
+   `orientation: landscape` sépare ce cas de l'écran de jeu ci-dessus : une
+   tablette 12,9" en portrait fait 1024px de large et matcherait les deux.
+
+   1100px et pas 861 : les trois colonnes réclament 340+340+280 plus les
+   gouttières, soit ~1020px. En dessous, `justify-content: center` les faisait
+   déborder des DEUX côtés — mesuré à 900px : le jeu commençait à -46px. */
+@media (orientation: landscape) and (min-width: 1100px) and (min-height: 620px) {
   .app-shell {
     height: 100dvh;
     overflow: hidden;
@@ -110,12 +195,35 @@ function logout() {
   .topbar {
     flex-shrink: 0;
   }
+  /* overflow-y:auto est indispensable : sans lui, une page plus haute que la
+     zone disponible (récompenses, aide…) déborderait sous le bandeau du bas au
+     lieu d'y défiler. Le hub, lui, tient pile et ne défile pas. */
   .app-main {
     flex: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
+  }
+  /* Sélecteur volontairement lourd (0,3,1). La réserve pour la nav du bas est
+     posée par `main.container` (0,2,1), plus bas dans ce fichier : un simple
+     `.app-main` (0,2,0) perdait, et le hub héritait de 60px de padding au lieu
+     de 14. Autant de hauteur prise au plateau — 46px, mesurés. */
+  main.app-main.container {
     padding-bottom: 14px;
+  }
+  /* Le hub n'est pas une page de lecture : il n'a aucune raison de s'arrêter à
+     1240px. Les colonnes filent vers les bords et tout ce qu'elles ne prennent
+     pas revient au plateau, qui reste collé entre elles. */
+  .app-shell--hub main.app-main.container {
+    max-width: none;
+  }
+  /* Le header se cale sur la largeur réelle du hub, que HomeView publie dans
+     --hub-w : elle dépend du plateau, donc de la hauteur de la fenêtre, et
+     aucune règle CSS ne saurait la deviner. Repli sur 1240 (le temps de la
+     première mesure, et sur les autres pages). */
+  .app-shell--hub .topbar__inner {
+    max-width: var(--hub-w, 1240px);
   }
 }
 .topbar {
@@ -126,12 +234,16 @@ function logout() {
   backdrop-filter: blur(10px);
   box-shadow: 0 4px 20px rgba(43, 45, 90, 0.08);
 }
+/* Compact par défaut : sur un écran de 390px, logo + son + profil + gemmes ne
+   tiennent pas aux tailles du desktop — mesuré, ça débordait de 6px sur toutes
+   les pages hors accueil. Les tailles confortables sont rétablies plus bas,
+   quand la fenêtre les permet. */
 .topbar__inner {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding-top: 10px;
-  padding-bottom: 10px;
+  gap: 10px;
+  padding-top: 8px;
+  padding-bottom: 8px;
 }
 .brand {
   display: flex;
@@ -139,12 +251,16 @@ function logout() {
   line-height: 0;
   flex-shrink: 0;
 }
+/* La hauteur du logo est fixée plus bas, avec le reste du mobile-first. */
 .brand__logo {
-  height: 46px;
   width: auto;
 }
+/* Mobile d'abord, et c'est délibéré : la nav du haut n'apparaît QUE quand on a
+   la place, la nav du bas sert partout ailleurs. L'inverse (masquer sous 860px)
+   laissait une tablette 12,9" en portrait — 1024px de large — sans aucune nav :
+   trop large pour la barre du bas, trop étroite pour le hub. */
 .mainnav {
-  display: flex;
+  display: none;
   gap: 4px;
   margin-left: auto;
 }
@@ -177,11 +293,31 @@ function logout() {
 .topbar__right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 7px;
   flex-shrink: 0;
 }
+.topbar__right :deep(.snd__btn) {
+  width: 36px;
+  height: 36px;
+}
+/* Jaune, mais fin et plat comme les autres CTA — pas le relief épais du .btn. */
+.topbar__login {
+  padding: 10px 22px;
+  font-size: 0.88rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 3px 10px rgba(224, 162, 0, 0.35);
+}
+.topbar__login:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 6px rgba(224, 162, 0, 0.35);
+}
+/* Profil : la fiche sur mobile, la puce complète quand il y a la place. */
+.topbar__player {
+  display: block;
+}
 .userchip {
-  display: flex;
+  display: none;
   align-items: center;
   gap: 10px;
   background: #fff;
@@ -197,6 +333,7 @@ function logout() {
   display: grid;
   place-items: center;
   font-size: 1.4rem;
+  flex-shrink: 0;
 }
 .userchip__info {
   min-width: 92px;
@@ -224,12 +361,14 @@ function logout() {
   transition: width 0.5s;
 }
 .userchip__logout {
+  display: grid;
+  place-items: center;
   background: #f1f3fa;
   border-radius: 50%;
   width: 30px;
   height: 30px;
-  font-size: 1rem;
   color: var(--ink-soft);
+  flex-shrink: 0;
 }
 .userchip__logout:hover {
   background: #ffe1e6;
@@ -238,66 +377,196 @@ function logout() {
 .gems {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   background: #fff;
-  padding: 9px 14px;
+  padding: 7px 11px;
   border-radius: 999px;
   box-shadow: var(--shadow);
   font-weight: 900;
+  font-size: 0.88rem;
+  color: var(--sea);
+  flex-shrink: 0;
 }
-.gems__ico {
-  font-size: 1.1rem;
+.gems__val {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
 }
 
-/* Nav mobile */
+/* --- Nav du bas (défaut) --- */
 .bottomnav {
-  display: none;
+  display: flex;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  height: var(--nav-h);
+  align-items: center;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 -4px 20px rgba(43, 45, 90, 0.12);
+  padding: 0 4px env(safe-area-inset-bottom);
+  justify-content: space-around;
+}
+.bottomnav__link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: 14px;
+  color: var(--ink-soft);
+  font-weight: 800;
+  font-size: 0.68rem;
+}
+.bottomnav__link.is-active {
+  color: var(--coral);
+}
+.bottomnav__ico {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+.brand__logo {
+  height: 34px;
+}
+/* Réserve sous le contenu pour la nav du bas, qui est fixed et ne pousse donc
+   rien. L'écran de jeu a la sienne (voir plus haut). */
+main.container {
+  padding-bottom: calc(var(--nav-h) + 26px);
 }
 
-@media (max-width: 860px) {
-  .mainnav {
-    display: none;
-  }
+/* Écrans étroits (iPhone SE 1re gén. 320px, Galaxy Fold fermé 344px). Le
+   logo fait 138px à lui seul : à côté du bouton « SE CONNECTER », ça débordait
+   de 50px. Rien n'est retiré, tout est resserré. */
+@media (max-width: 399px) {
   .brand__logo {
-    height: 34px;
+    height: 28px;
   }
-  .userchip__info {
+  .topbar__login {
+    padding: 9px 13px;
+    font-size: 0.75rem;
+  }
+  .topbar__inner {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}
+
+/* --- Nav du haut, et tailles confortables : quand la fenêtre le permet ---
+   Les deux seuils sortent d'une mesure, pas d'une intuition. Barre connectée :
+   logo 173 + nav 642 + profil 320 + gouttières 60.
+     · avec les libellés  → 1195px
+     · en icônes seules   → 885px
+   D'où 900 pour la nav, et 1240 pour les libellés (soit la largeur max du
+   .container : au-delà la barre ne grandit plus, donc rien ne bougera). */
+@media (min-width: 900px) and (orientation: landscape) {
+  .mainnav {
+    display: flex;
+  }
+  .mainnav__lbl {
     display: none;
   }
   .bottomnav {
-    display: flex;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 60;
-    background: rgba(255, 255, 255, 0.94);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 -4px 20px rgba(43, 45, 90, 0.12);
-    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
-    justify-content: space-around;
+    display: none;
   }
-  .bottomnav__link {
+  .topbar__inner {
+    gap: 16px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+  .topbar__right {
+    gap: 10px;
+  }
+  .topbar__right :deep(.snd__btn) {
+    width: 42px;
+    height: 42px;
+  }
+  .brand__logo {
+    height: 46px;
+  }
+  .topbar__player {
+    display: none;
+  }
+  .userchip {
+    display: flex;
+  }
+  .userchip__info {
+    display: block;
+  }
+  .gems {
+    gap: 6px;
+    padding: 9px 14px;
+    font-size: 1rem;
+  }
+  main.container {
+    padding-bottom: 60px;
+  }
+}
+
+/* Assez large pour la barre complète (1195px mesurés) : les libellés reviennent. */
+@media (min-width: 1240px) and (orientation: landscape) {
+  .mainnav__lbl {
+    display: inline;
+  }
+}
+
+/* --- Rotation demandée : téléphone en paysage sur l'écran de jeu --- */
+.rotate {
+  display: none;
+}
+/* Seuil en hauteur, pas en largeur : c'est la hauteur qui manque. Une tablette
+   en paysage (768px de haut) joue très bien et ne doit pas voir ce message. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .rotate {
+    display: grid;
+    place-items: center;
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: linear-gradient(180deg, #bdeaff, #8fd8ff 60%, #ffe6b0);
+    padding: 20px;
+  }
+  .rotate__card {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
-    padding: 6px 8px;
-    border-radius: 14px;
-    color: var(--ink-soft);
-    font-weight: 800;
-    font-size: 0.68rem;
+    gap: 6px;
+    text-align: center;
+    background: #fff;
+    border-radius: var(--radius);
+    padding: 22px 28px;
+    box-shadow: var(--shadow-lg);
   }
-  .bottomnav__link.is-active {
-    color: var(--coral);
-  }
-  .bottomnav__ico {
-    width: 24px;
-    height: 24px;
+  .rotate__ico {
+    width: 54px;
+    height: 54px;
     object-fit: contain;
+    animation: rotate-hint 2.4s ease-in-out infinite;
   }
-  main.container {
-    padding-bottom: 90px;
+  .rotate__card b {
+    font-size: 1.15rem;
+  }
+  .rotate__card span {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+  }
+}
+@keyframes rotate-hint {
+  0%,
+  45%,
+  100% {
+    transform: rotate(0);
+  }
+  70%,
+  90% {
+    transform: rotate(-90deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rotate__ico {
+    animation: none;
   }
 }
 </style>

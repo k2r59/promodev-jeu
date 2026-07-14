@@ -1,15 +1,17 @@
 import { Router } from 'express'
 import { Score } from '../models/Score.js'
 import { requireAuth } from '../middleware/auth.js'
-import { DAILY_CHALLENGES, BADGES, dayKey } from '../gameData.js'
+import { dailyPick, BADGES, dayKey } from '../gameData.js'
 
 const router = Router()
 
-// Renvoie l'état des défis du jour pour l'utilisateur
+// Renvoie l'état des défis du jour pour l'utilisateur.
+// dailyPick est déterministe : cette liste et celle utilisée au moment de
+// crediter une partie sont forcément les mêmes.
 function challengesState(user) {
   const key = dayKey()
   const progress = (user.dailyChallenges && user.dailyChallenges[key]) || {}
-  return DAILY_CHALLENGES.map((c) => {
+  return dailyPick(key).map((c) => {
     const claimedKey = `${key}:${c.id}`
     const value = Math.min(progress[c.id] || 0, c.goal)
     return {
@@ -68,7 +70,9 @@ router.post('/session', requireAuth, async (req, res) => {
     const session = { score, maxCombo, boostersUsed, matches }
     const rewards = { gems: 0, xp: 0, completed: [] }
 
-    for (const c of DAILY_CHALLENGES) {
+    // Seuls les défis tirés pour aujourd'hui comptent : sinon on ferait
+    // progresser des défis que le joueur ne voit même pas.
+    for (const c of dailyPick(key)) {
       const inc = c.match(session)
       if (!inc) continue
       const before = today[c.id] || 0

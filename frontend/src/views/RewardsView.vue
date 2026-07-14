@@ -2,10 +2,22 @@
 import { ref, onMounted } from 'vue'
 import { api } from '../api/client.js'
 import { useAuthStore } from '../stores/auth.js'
+import imgCoffre from '../assets/features/recompenses.png'
+import imgPalmier from '../assets/nav/accueil.png'
+
+// Nommés d'après les clés du serveur : aucune table de correspondance à tenir.
+const BADGE_IMGS = import.meta.glob('../assets/badges/*.png', { eager: true, import: 'default' })
+const badgeImg = (key) => BADGE_IMGS[`../assets/badges/${key}.png`]
 
 const auth = useAuthStore()
 const badges = ref([])
 const loading = ref(true)
+
+const STEPS = [
+  { icon: '🏄', html: 'Jouez et enregistrez votre <b>meilleur score</b>.' },
+  { icon: '🏆', html: 'Terminez dans le <b>Top 100</b> à la fin de l’opération pour devenir finaliste.' },
+  { icon: '🎯', html: 'Un <b>tirage au sort</b> parmi les 100 finalistes désigne le grand gagnant.' }
+]
 
 // Fallback si non connecté : liste visuelle des badges
 const FALLBACK = [
@@ -40,34 +52,49 @@ onMounted(load)
     <!-- Le grand prix -->
     <div class="grandprize card">
       <div class="grandprize__left">
-        <div class="pill pill--tag">🎁 Récompense finale</div>
+        <div class="pill pill--tag">🏅 Récompense finale</div>
         <div class="grandprize__amount">1 000 €</div>
         <p>de remise sur une future opération Promodev.</p>
+        <img class="grandprize__coffre" :src="imgCoffre" alt="" aria-hidden="true" />
       </div>
       <div class="grandprize__right">
         <h2>Comment gagner ?</h2>
-        <ol>
-          <li>🏄 Jouez et enregistrez votre <b>meilleur score</b>.</li>
-          <li>🏆 Terminez dans le <b>Top 100</b> à la fin de l'opération pour devenir finaliste.</li>
-          <li>🎲 Un <b>tirage au sort</b> parmi les 100 finalistes désigne le grand gagnant.</li>
+        <ol class="steps">
+          <li v-for="(s, i) in STEPS" :key="i" class="step">
+            <span class="step__num">{{ i + 1 }}</span>
+            <span class="step__ico" aria-hidden="true">{{ s.icon }}</span>
+            <span class="step__txt" v-html="s.html"></span>
+          </li>
         </ol>
-        <p class="muted">Chacun garde une chance réelle : investissez-vous, mais la chance fait le reste !</p>
+        <p class="note">
+          <span class="note__ico" aria-hidden="true">i</span>
+          <span>Chacun garde une chance réelle : investissez-vous, mais la chance fait le reste !</span>
+        </p>
       </div>
     </div>
 
     <!-- Badges -->
     <div class="card">
-      <div class="card__title"><span class="ico">🏅</span> Vos badges</div>
+      <div class="card__title">
+        <img class="ico ico--img" :src="imgPalmier" alt="" aria-hidden="true" /> Vos badges
+      </div>
       <div v-if="loading" class="muted center">Chargement…</div>
       <div v-else class="badge-grid">
         <div v-for="b in badges" :key="b.key" class="badge" :class="{ locked: !b.unlocked }">
-          <div class="badge__hex">{{ b.unlocked ? b.icon : '🔒' }}</div>
+          <div class="badge__visual">
+            <img class="badge__hex" :src="badgeImg(b.key)" :alt="b.label" />
+            <span v-if="!b.unlocked" class="badge__lock" aria-label="Verrouillé">🔒</span>
+          </div>
           <div class="badge__label">{{ b.label }}</div>
           <div class="badge__desc">{{ b.desc }}</div>
         </div>
       </div>
-      <p v-if="!auth.isAuth" class="muted center" style="margin-top: 12px">
-        <RouterLink to="/connexion" class="link">Connectez-vous</RouterLink> pour débloquer et suivre vos badges.
+      <p v-if="!auth.isAuth" class="signin">
+        <span class="signin__ico" aria-hidden="true">🔒</span>
+        <span>
+          <RouterLink :to="{ path: '/', query: { mode: 'connexion' } }" class="link">Connectez-vous</RouterLink>
+          pour débloquer et suivre vos badges.
+        </span>
       </p>
     </div>
   </div>
@@ -91,63 +118,152 @@ onMounted(load)
 }
 .grandprize__left {
   text-align: center;
-  background: linear-gradient(160deg, #ffd98a, #ffbe55);
+  background: linear-gradient(165deg, #ffeec4, #ffdc95);
   border-radius: 18px;
-  padding: 20px;
+  padding: 20px 20px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 .pill--tag {
-  background: var(--coral);
+  background: linear-gradient(180deg, var(--coral-2), var(--coral));
   color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.72rem;
+  box-shadow: 0 3px 8px rgba(255, 94, 120, 0.35);
 }
 .grandprize__amount {
-  font-size: 3rem;
+  font-size: 3.2rem;
   font-weight: 900;
-  color: #b23c00;
+  color: #e8620d;
   text-shadow: 0 2px 0 #fff;
-  margin: 10px 0 2px;
+  margin: 12px 0 2px;
+  line-height: 1;
 }
 .grandprize__left p {
   font-weight: 700;
   color: #7a4b00;
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
+}
+.grandprize__coffre {
+  width: 78%;
+  max-width: 200px;
+  height: auto;
+  margin-top: -4px;
+  filter: drop-shadow(0 6px 10px rgba(120, 90, 40, 0.3));
 }
 .grandprize__right h2 {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+  font-size: 1.3rem;
 }
-.grandprize__right ol {
-  margin: 0 0 10px;
-  padding-left: 20px;
-  line-height: 1.7;
+
+/* Étapes numérotées : la pastille porte le rang, l'ordre a du sens ici. */
+.steps {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.step {
+  display: grid;
+  grid-template-columns: 24px 24px 1fr;
+  align-items: start;
+  gap: 9px;
   font-weight: 600;
+  line-height: 1.4;
+  font-size: 0.92rem;
 }
+.step__num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(180deg, #ffd0d9, #ffb3c1);
+  color: #c22c48;
+  font-weight: 900;
+  font-size: 0.75rem;
+}
+.step__ico {
+  font-size: 1.1rem;
+  line-height: 1.2;
+}
+.note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: #eef4fd;
+  color: var(--ink-soft);
+  font-weight: 600;
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+.note__ico {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(180deg, #5cbdf5, #2e93e0);
+  color: #fff;
+  font-weight: 900;
+  font-style: italic;
+  font-size: 0.85rem;
+}
+/* Les 6 badges tiennent sur une ligne : colonnes fixes plutôt qu'auto-fill,
+   qui repliait dès que la place manquait. */
 .badge-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
 }
 .badge {
   text-align: center;
-  padding: 14px 8px;
+  padding: 14px 8px 16px;
   border-radius: 16px;
-  background: #f7f9fd;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(43, 45, 90, 0.07);
+}
+.badge__visual {
+  position: relative;
+  width: 76px;
+  margin: 0 auto 10px;
 }
 .badge__hex {
-  width: 64px;
-  height: 64px;
-  margin: 0 auto 8px;
+  width: 100%;
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 4px 7px rgba(43, 45, 90, 0.24));
+}
+/* Cadenas en pastille, posé sur le coin du badge verrouillé. */
+.badge__lock {
+  position: absolute;
+  top: -2px;
+  right: -6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
   display: grid;
   place-items: center;
-  font-size: 2rem;
-  background: linear-gradient(180deg, #fff, #e8eff9);
-  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
-  box-shadow: var(--shadow);
+  font-size: 0.75rem;
+  background: linear-gradient(180deg, #fff, #e9edf6);
+  box-shadow: 0 2px 5px rgba(43, 45, 90, 0.25);
 }
-.badge:not(.locked) .badge__hex {
-  background: linear-gradient(180deg, #ffe9a8, #ffca4d);
+.badge.locked .badge__hex {
+  filter: grayscale(1) drop-shadow(0 3px 6px rgba(43, 45, 90, 0.16));
+  opacity: 0.75;
 }
-.badge.locked {
-  opacity: 0.6;
+.badge.locked .badge__label,
+.badge.locked .badge__desc {
+  opacity: 0.7;
 }
 .badge__label {
   font-weight: 900;
@@ -158,14 +274,44 @@ onMounted(load)
   color: var(--ink-soft);
   font-weight: 600;
   margin-top: 3px;
+  line-height: 1.3;
+}
+
+.signin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin: 14px 0 0;
+  color: var(--ink-soft);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.signin__ico {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  background: linear-gradient(180deg, #5cbdf5, #2e93e0);
+  flex-shrink: 0;
 }
 .link {
   color: var(--sky);
   font-weight: 800;
 }
+@media (max-width: 860px) {
+  .badge-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
 @media (max-width: 620px) {
   .grandprize {
     grid-template-columns: 1fr;
+  }
+  .badge-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>

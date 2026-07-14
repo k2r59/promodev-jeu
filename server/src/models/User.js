@@ -21,6 +21,10 @@ const userSchema = new Schema(
     },
     passwordHash: { type: String, required: true },
 
+    // Coordonnées professionnelles, facultatives (le jeu reste jouable sans).
+    societe: { type: String, trim: true, maxlength: 120, default: '' },
+    telephone: { type: String, trim: true, maxlength: 30, default: '' },
+
     // Progression
     xp: { type: Number, default: 0 },
     level: { type: Number, default: 1 },
@@ -68,6 +72,8 @@ userSchema.methods.toPublic = function () {
     id: this._id,
     pseudo: this.pseudo,
     email: this.email,
+    societe: this.societe,
+    telephone: this.telephone,
     avatar: this.avatar,
     xp: this.xp,
     level: this.level,

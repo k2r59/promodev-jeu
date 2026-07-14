@@ -17,7 +17,33 @@
   --shadow-lg: 0 18px 44px rgba(43, 45, 90, 0.22);
   --radius: 22px;
   --radius-sm: 14px;
+  /* Hauteurs fixes du chrome du plateau (HUD au-dessus, boosters en dessous).
+     Source unique : GameStage/GameBoard les appliquent, et fitCenter (HomeView)
+     les lit pour calculer la largeur de la colonne centrale. C'est ce qui
+     garantit que le formulaire occupe exactement la place du jeu, alors qu'il
+     n'a ni HUD ni boosters à mesurer. Les changer ici suffit. */
+  --hud-h: 63px;
+  --boosters-h: 50px;
+  /* Hauteur de la nav du bas. Elle est fixed et ne pousse donc rien : c'est
+     cette réserve que le contenu se garde en dessous pour rester atteignable. */
+  --nav-h: 56px;
   --font: 'Baloo 2', 'Trebuchet MS', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* --- Écran de jeu portrait (mobile + tablette) -----------------------------
+   UNE seule définition de « portrait » dans tout le projet, reprise à
+   l'identique dans App.vue, GameStage, GameBoard et stores/ui.js. La borne à
+   1100px laisse dehors les rares écrans desktop pivotés, sans exclure une
+   tablette 12,9" (1024px de large en portrait), qui est bien une tablette.
+
+   Le HUD y porte tout (profil, gemmes, son) : il gagne un liseré d'objectif en
+   bas, d'où ces quelques pixels de plus. Les boosters, eux, deviennent un dock
+   au pouce, plus haut mais bien plus facile à viser. */
+@media (orientation: portrait) and (max-width: 1100px) {
+  :root {
+    --hud-h: 58px;
+    --boosters-h: 58px;
+  }
 }
 
 * {
@@ -35,9 +61,16 @@ body {
   background: linear-gradient(180deg, #bdeaff 0%, #8fd8ff 26%, #ffe6b0 100%) fixed;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  /* Coupe le « tirer pour rafraîchir » et le rebond élastique : sur un plateau
+     tactile, un swipe vers le bas doit échanger deux tuiles, pas recharger la
+     page. Sans effet là où le rebond n'existe pas. */
+  overscroll-behavior: none;
 }
-/* Décor de plage sur desktop ; le dégradé reste le fond mobile (et le fallback). */
-@media (min-width: 861px) {
+/* Décor de plage sur desktop ; le dégradé reste le fond mobile (et le fallback).
+   `landscape` compte : l'image est cadrée pour un écran couché, et une tablette
+   en portrait la recadrerait n'importe comment — sans compter qu'en jeu le
+   plateau la recouvre presque entièrement. */
+@media (orientation: landscape) and (min-width: 861px) {
   body {
     background: url('./bg-desktop.jpg') center center / cover no-repeat fixed,
       linear-gradient(180deg, #bdeaff 0%, #8fd8ff 26%, #ffe6b0 100%) fixed;
@@ -49,14 +82,28 @@ body {
 
 /* Desktop : l'app est cadrée sur l'écran — exactement 100% de la fenêtre, en
    largeur comme en hauteur, jamais de scroll. C'est le shell qui gère la
-   hauteur. Le seuil (861px / 620px) doit rester aligné sur celui d'App.vue. */
-@media (min-width: 861px) and (min-height: 620px) {
+   hauteur. Le seuil doit rester aligné sur celui d'App.vue. */
+@media (orientation: landscape) and (min-width: 1100px) and (min-height: 620px) {
   html,
   body {
     height: 100%;
     overflow: hidden;
   }
   #app {
+    height: 100%;
+    min-height: 0;
+  }
+}
+
+/* Portrait : même cadrage, mais sur l'accueil uniquement — c'est le jeu. Les
+   autres pages (classement, défis…) restent des pages qui défilent. */
+@media (orientation: portrait) and (max-width: 1100px) {
+  html:has(.app-shell--game),
+  html:has(.app-shell--game) body {
+    height: 100%;
+    overflow: hidden;
+  }
+  html:has(.app-shell--game) #app {
     height: 100%;
     min-height: 0;
   }
@@ -148,13 +195,23 @@ h4 {
 .card__title {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 1.05rem;
+  gap: 7px;
+  font-size: 0.85rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: var(--ink);
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 .card__title .ico {
-  font-size: 1.3rem;
+  font-size: 1.1rem;
+}
+/* Icône illustrée en tête de bloc (le palmier). */
+.card__title .ico--img {
+  width: 19px;
+  height: 19px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .pill {
@@ -210,6 +267,25 @@ h4 {
   max-width: 1240px;
   margin: 0 auto;
   padding: 0 14px 60px;
+}
+
+/* Écrans secondaires (classement, défis, aide, récompenses) : un bloc unique qui
+   remplit la hauteur disponible et défile en interne, plutôt que des cartes
+   empilées qui débordent sous le bandeau du bas. */
+@media (orientation: landscape) and (min-width: 1100px) and (min-height: 620px) {
+  .page {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding-top: 14px;
+  }
+  .page__card {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
 }
 
 /* Champs */

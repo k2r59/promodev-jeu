@@ -6,8 +6,9 @@
     <meta name="theme-color" content="#39b6ff" />
     <meta name="description" content="Promodev - Le Jeu de l'Été : un Match-3 estival. Enchaînez les combos et gagnez 1 000 € de remise !" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%9E%3C/text%3E%3C/svg%3E" />
-    <!-- PWA -->
-    <link rel="manifest" href="/manifest.webmanifest" />
+    <!-- PWA. Le manifeste n'est PAS déclaré ici : sa seule présence rendrait le
+         site installable sur desktop. Il est injecté par src/pwa.js, en prod et
+         sur mobile/tablette uniquement. -->
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />

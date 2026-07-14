@@ -5,6 +5,8 @@ import { useAuthStore } from '../stores/auth.js'
 import GameStage from '../components/GameStage.vue'
 import AuthPanel from '../components/AuthPanel.vue'
 import imgPrize from '../assets/blocks/prize.png'
+// Même fichier que l'icône « Accueil » de la nav : Vite ne le dédouble pas.
+import imgPalmier from '../assets/nav/accueil.png'
 
 const auth = useAuthStore()
 
@@ -24,47 +26,63 @@ const centerW = ref(null)
 let ro = null
 let lastH = 0
 
-const HUD_H = 71 // replis quand le formulaire est affiché (pas de HUD)
-const BOOSTERS_H = 69
 const GAPS = 24 // .stage (hud→zone) + .gamewrap (plateau→boosters)
 const SIDE_COLS = 340 * 2 + 16 * 2 // colonnes latérales + gouttières
 
-const isDesktopFit = () => window.matchMedia('(min-width: 861px) and (min-height: 620px)').matches
+const isDesktopFit = () =>
+  window.matchMedia('(orientation: landscape) and (min-width: 1100px) and (min-height: 620px)').matches
+
+// Hauteurs du chrome du plateau, lues sur les variables CSS (voir styles.css).
+// Le calcul est le même que le jeu soit affiché ou non : le formulaire obtient
+// donc exactement la largeur du plateau.
+function cssPx(name, fallback) {
+  const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name))
+  return Number.isFinite(v) ? v : fallback
+}
+
+// Le hub n'étant plus bridé à 1240px, sa largeur dépend du plateau — donc de la
+// hauteur de la fenêtre. La barre du site ne peut pas s'aligner dessus en CSS
+// seul : on lui publie la largeur mesurée. Sans ça, le logo filait au bord
+// pendant que le bloc cadeau restait centré 150px plus loin.
+// +28 : les 2x14px de padding du .container. On aligne le CONTENU de la barre
+// sur les colonnes, pas sa boîte — sans ça le logo tombait 14px trop à droite.
+const CONTAINER_PAD = 28
+
+function publieLargeurHub(w) {
+  const root = document.documentElement.style
+  if (w) root.setProperty('--hub-w', w + SIDE_COLS + CONTAINER_PAD + 'px')
+  else root.removeProperty('--hub-w')
+}
 
 function fitCenter() {
   const el = centerEl.value
   if (!el) return
   if (!isDesktopFit()) {
     centerW.value = null
+    publieLargeurHub(null)
     lastH = 0
     return
   }
   const h = el.clientHeight
   if (!h || h === lastH) return // ignore nos propres changements de largeur
   lastH = h
-  const hud = el.querySelector('.hud')?.offsetHeight || HUD_H
-  const boosters = el.querySelector('.boosters')?.offsetHeight || BOOSTERS_H
   // Le plateau prend toute la hauteur restante, borné par la largeur encore
   // libre une fois les colonnes latérales posées.
-  const byHeight = h - hud - boosters - GAPS
+  const byHeight = h - cssPx('--hud-h', 63) - cssPx('--boosters-h', 50) - GAPS
   const byWidth = (el.parentElement?.clientWidth || 0) - SIDE_COLS
   centerW.value = Math.round(Math.max(280, Math.min(byHeight, byWidth)))
+  publieLargeurHub(centerW.value)
 }
 
 const badges = ref([])
 
+// Les fichiers sont nommés d'après les clés du serveur (debutant, rapide,
+// stratege, combo, expert, mystere) : pas de table de correspondance à tenir.
+const BADGE_IMGS = import.meta.glob('../assets/badges/*.png', { eager: true, import: 'default' })
+const badgeImg = (key) => BADGE_IMGS[`../assets/badges/${key}.png`]
+
 // 5 badges max sur le hub ; la liste complète est sur /recompenses.
 const topBadges = computed(() => badges.value.slice(0, 5))
-
-// Teintes des hexagones, dans l'ordre de la maquette. Un badge verrouillé
-// reste gris quelle que soit sa position.
-const BADGE_TINTS = [
-  ['#5fd0f0', '#2ba7d4'],
-  ['#b98cf5', '#8b5ae0'],
-  ['#ffc93c', '#f59314'],
-  ['#5fd68f', '#27a862'],
-  ['#7fd3ff', '#39b6ff']
-]
 
 // Onglets du classement. Les clés sont celles de l'API (day|week|month|all).
 const LB_TABS = [
@@ -122,6 +140,12 @@ onMounted(() => {
   ro = new ResizeObserver(fitCenter)
   ro.observe(centerEl.value)
 })
+// Pas de nettoyage de --hub-w au démontage, et c'est voulu : avec
+// <transition mode="out-in">, le onUnmounted de la vue sortante peut passer
+// APRÈS le onMounted de l'entrante — au retour sur le hub, il effaçait la
+// valeur que fitCenter venait de publier, et la barre repartait à 1240.
+// La variable ne sert de toute façon qu'à `.app-shell--hub` : ailleurs, elle
+// dort sans rien faire.
 onUnmounted(() => ro?.disconnect())
 </script>
 
@@ -144,7 +168,7 @@ onUnmounted(() => ro?.disconnect())
 
       <!-- Défis du jour -->
       <div class="card">
-        <div class="card__title"><span class="ico">🏝️</span> Défis du jour</div>
+        <div class="card__title"><img class="ico ico--img" :src="imgPalmier" alt="" aria-hidden="true" /> Défis du jour</div>
         <template v-if="auth.isAuth && previewChallenges.length">
           <div v-for="(c, i) in previewChallenges" :key="c.id" class="chal">
             <span class="chal__ico" :style="{ '--tint': CHAL_TINTS[i % CHAL_TINTS.length] }">{{ c.icon }}</span>
@@ -160,6 +184,7 @@ onUnmounted(() => ro?.disconnect())
           Connectez-vous pour relever les défis quotidiens et gagner des gemmes !
         </p>
       </div>
+
     </aside>
 
     <!-- Colonne centrale : le jeu, ou le formulaire à sa place tant qu'on n'est
@@ -173,7 +198,7 @@ onUnmounted(() => ro?.disconnect())
     <aside class="col col--right">
       <!-- Classement -->
       <div class="card">
-        <div class="card__title"><span class="ico">🏆</span> Classement</div>
+        <div class="card__title"><img class="ico ico--img" :src="imgPalmier" alt="" aria-hidden="true" /> Classement</div>
         <div class="lb-tabs" role="tablist">
           <button
             v-for="t in LB_TABS"
@@ -207,20 +232,10 @@ onUnmounted(() => ro?.disconnect())
 
       <!-- Badges -->
       <div class="card">
-        <div class="card__title"><span class="ico">🏅</span> Badges</div>
+        <div class="card__title"><img class="ico ico--img" :src="imgPalmier" alt="" aria-hidden="true" /> Badges</div>
         <div class="badges-preview">
-          <div
-            v-for="(b, i) in topBadges"
-            :key="b.key"
-            class="bdg"
-            :class="{ 'bdg--locked': !b.unlocked }"
-            :title="b.desc"
-          >
-            <span
-              class="bdg__hex"
-              :style="b.unlocked ? { '--hex-a': BADGE_TINTS[i][0], '--hex-b': BADGE_TINTS[i][1] } : null"
-              >{{ b.unlocked ? b.icon : '🔒' }}</span
-            >
+          <div v-for="b in topBadges" :key="b.key" class="bdg" :class="{ 'bdg--locked': !b.unlocked }" :title="b.desc">
+            <img class="bdg__hex" :src="badgeImg(b.key)" :alt="b.label" />
             <span class="bdg__lbl">{{ b.label }}</span>
           </div>
           <p v-if="!topBadges.length" class="muted center" style="padding: 8px 0; margin: 0">
@@ -253,7 +268,7 @@ onUnmounted(() => ro?.disconnect())
    En flex (et non en grid), la colonne centrale se dimensionne sur son contenu :
    le plateau étant bridé par la hauteur, les colonnes viennent se coller à lui
    au lieu de laisser un vide de chaque côté. */
-@media (min-width: 861px) and (min-height: 620px) {
+@media (orientation: landscape) and (min-width: 1100px) and (min-height: 620px) {
   .home {
     display: flex;
     justify-content: center;
@@ -270,10 +285,15 @@ onUnmounted(() => ro?.disconnect())
   }
   /* Largeur ajustée en JS sur le carré du plateau (voir fitCenter).
      560px = repli avant la première mesure, pour que le HUD soit mesuré
-     à sa largeur réelle et non replié. */
+     à sa largeur réelle et non replié.
+     `order: 0` n'est pas décoratif : la règle `max-width: 1080px` plus bas dans
+     ce fichier pose `order: -1` (héritage de l'ancienne grille empilée) et, en
+     flex, ça sortait le jeu à gauche du cadeau. On l'annule ici plutôt que de
+     compter sur l'ordre du fichier. */
   .col--center {
     flex: 0 0 auto;
     width: 560px;
+    order: 0;
   }
   .col {
     height: 100%;
@@ -319,6 +339,7 @@ onUnmounted(() => ro?.disconnect())
   outline: 3px solid var(--sky);
   outline-offset: 2px;
 }
+
 
 .chal {
   display: flex;
@@ -479,14 +500,9 @@ onUnmounted(() => ro?.disconnect())
 }
 .bdg__hex {
   width: 100%;
-  max-width: 56px;
-  aspect-ratio: 1 / 1.09;
-  display: grid;
-  place-items: center;
-  font-size: 1.4rem;
-  /* Hexagone pointe en haut, comme la maquette. */
-  clip-path: polygon(50% 0%, 96% 25%, 96% 75%, 50% 100%, 4% 75%, 4% 25%);
-  background: linear-gradient(160deg, var(--hex-a, #dfe5f2), var(--hex-b, #c3ccdf));
+  max-width: 54px;
+  height: auto;
+  object-fit: contain;
   filter: drop-shadow(0 3px 5px rgba(43, 45, 90, 0.22));
 }
 .bdg__lbl {
@@ -523,8 +539,63 @@ onUnmounted(() => ro?.disconnect())
   .home {
     grid-template-columns: 1fr;
   }
-  .hero__title {
-    font-size: 2rem;
+}
+
+/* Portrait. Deux écrans très différents partagent cette route :
+   - connecté (.app-shell--game) : c'est LE jeu, cadré sur la fenêtre ;
+   - déconnecté : c'est un formulaire d'inscription, donc une page qui défile,
+     et le cadeau des 1 000 € reste — c'est lui qui donne envie de s'inscrire.
+   D'où le préfixe .app-shell--game : sans lui, le formulaire héritait d'une
+   hauteur fixe et ses derniers champs sortaient de l'écran. */
+@media (orientation: portrait) and (max-width: 1100px) {
+  .home {
+    display: flex;
+    flex-direction: column;
+    padding-top: 0;
+    /* Indispensable : la règle de base pose `align-items: start` pour la grille
+       desktop. En flex colonne, cette valeur empêche la colonne de s'étirer en
+       largeur — le jeu se tassait sur la largeur de son contenu. */
+    align-items: stretch;
+  }
+  /* Déconnecté : le classement, les badges et les défis n'ont rien à dire à qui
+     n'a pas de compte, et ils ont chacun leur onglet. Restent le formulaire et
+     le cadeau. */
+  .col--right,
+  .col--left > .card {
+    display: none;
+  }
+  /* Une tablette n'a pas besoin de champs de 750px de large.
+     Ciblé sur « pas l'écran de jeu » plutôt qu'annulé ensuite : `margin: auto`
+     désactive `align-items: stretch`, et un simple `max-width: none` côté jeu
+     ne suffisait donc pas — le plateau retombait à 288px sur un iPad de 820. */
+  .app-shell:not(.app-shell--game) .home {
+    max-width: 460px;
+    margin: 0 auto;
+  }
+  /* Formulaire AVANT le cadeau, et c'est un choix : ainsi il tient en entier
+     sans défiler, bouton compris. Le cadeau juste dessous répond à « pourquoi
+     je donnerais mon e-mail ? » à qui hésite. (`order` était déjà posé par la
+     règle 1080px plus haut ; on l'assume ici plutôt que d'en hériter par
+     accident.) */
+  .col--center {
+    order: -1;
+    width: auto;
+  }
+
+  /* Écran de jeu : il ne reste QUE le jeu. Le cadeau, les défis, le classement
+     et les badges ont chacun leur onglet dans la nav du bas ; les empiler sous
+     le plateau ne ferait que rallonger une page qu'on ne défile pas. */
+  .app-shell--game .home {
+    height: 100%;
+    min-height: 0;
+    gap: 0;
+  }
+  .app-shell--game .col--left {
+    display: none;
+  }
+  .app-shell--game .col--center {
+    flex: 1;
+    min-height: 0;
   }
 }
 </style>

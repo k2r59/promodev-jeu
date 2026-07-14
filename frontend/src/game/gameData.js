@@ -30,10 +30,3 @@ export const BOOSTERS = {
   vague: { key: 'vague', emoji: '🌊', label: 'Vague', desc: 'Détruit toutes les tuiles identiques' }
 }
 
-export const DAILY_CHALLENGES_INFO = [
-  { id: 'score_3000', label: 'Marquer 3 000 points', icon: '⭐' },
-  { id: 'play_2', label: 'Faire 2 parties rapides', icon: '🏄' },
-  { id: 'combo_x5', label: 'Réaliser un combo x5', icon: '🕶️' },
-  { id: 'boosters_5', label: 'Utiliser 5 boosters', icon: '💣' },
-  { id: 'score_10000', label: 'Marquer 10 000 points aujourd’hui', icon: '🍉' }
-]
