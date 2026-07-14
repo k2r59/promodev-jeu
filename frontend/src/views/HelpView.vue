@@ -11,28 +11,41 @@ import imgPalmier from '../assets/nav/accueil.png'
       <p class="muted">Le Jeu de l'Été se joue en 2 minutes chrono. Le principe est simple, la maîtrise… c'est autre chose !</p>
     </div>
 
-    <div class="steps">
-      <div class="step">
+    <!-- Les étapes sont numérotées parce qu'elles se suivent vraiment : on
+         échange, on aligne, ça cascade, on marque. L'ordre porte du sens. -->
+    <ol class="steps">
+      <li class="step">
         <span class="step__n">1</span>
-        <h3>Échangez deux tuiles</h3>
-        <p>Touchez (ou glissez) une tuile vers une voisine pour les permuter. Un échange n'est valide que s'il crée un alignement.</p>
-      </div>
-      <div class="step">
+        <div class="step__body">
+          <h3>Échangez deux tuiles</h3>
+          <p>Touchez (ou glissez) une tuile vers une voisine pour les permuter. Un échange n'est valide que s'il crée un alignement.</p>
+        </div>
+      </li>
+      <li class="step">
         <span class="step__n">2</span>
-        <h3>Alignez-en 3 ou plus</h3>
-        <p>Alignez au moins 3 tuiles identiques, horizontalement ou verticalement, pour les faire exploser et marquer des points.</p>
-      </div>
-      <div class="step">
+        <div class="step__body">
+          <h3>Alignez-en 3 ou plus</h3>
+          <p>Alignez au moins 3 tuiles identiques, horizontalement ou verticalement, pour les faire exploser et marquer des points.</p>
+        </div>
+      </li>
+      <li class="step">
         <span class="step__n">3</span>
-        <h3>Enchaînez les combos</h3>
-        <p>Quand des tuiles tombent et créent de nouveaux alignements en cascade, le multiplicateur grimpe : <b>x2, x3, x5…</b> 🔥</p>
-      </div>
-      <div class="step">
+        <div class="step__body">
+          <h3>Enchaînez les combos</h3>
+          <p>Quand des tuiles tombent et créent de nouveaux alignements en cascade, le multiplicateur grimpe : <b>x2, x3, x5…</b></p>
+        </div>
+      </li>
+      <li class="step">
         <span class="step__n">4</span>
-        <h3>Maximisez votre score</h3>
-        <p>Un alignement de 4+ tuiles rapporte un bonus. Visez le meilleur score avant la fin du chrono !</p>
-      </div>
-    </div>
+        <div class="step__body">
+          <!-- Le bonus se déclenche sur le nombre de tuiles détruites d'un coup
+               (engine : matches.size >= 4), pas sur la longueur d'un alignement :
+               deux alignements de 3 simultanés le déclenchent aussi. -->
+          <h3>Maximisez votre score</h3>
+          <p>Faire exploser 4 tuiles ou plus d'un seul coup rapporte un bonus. Visez le meilleur score avant la fin du chrono !</p>
+        </div>
+      </li>
+    </ol>
 
     <section class="block">
       <div class="card__title"><img class="ico ico--img" :src="imgPalmier" alt="" aria-hidden="true" /> Les tuiles de l'été</div>
@@ -77,42 +90,67 @@ import imgPalmier from '../assets/nav/accueil.png'
 .block {
   margin-top: 18px;
 }
+/* La ligne de texte est bornée : centrée sur toute la largeur, elle donnait des
+   lignes trop longues et une découpe hasardeuse. */
 .help__head {
   text-align: center;
+  margin-bottom: 18px;
 }
 .help__head h1 {
-  font-size: 1.9rem;
-  margin: 6px 0;
+  font-size: 1.7rem;
+  margin: 2px 0 8px;
 }
+.help__head p {
+  max-width: 46ch;
+  margin: 0 auto;
+  font-weight: 600;
+  line-height: 1.5;
+}
+/* Chaque étape est une carte, et la pastille se pose DANS la carte, à gauche du
+   titre. Elle était en `position: absolute` par-dessus le bloc — ça tenait tant
+   que chaque étape avait son propre fond blanc, mais depuis que la page est un
+   bloc unique elle flottait par-dessus le titre. */
 .steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
+  gap: 12px;
 }
 .step {
-  position: relative;
-  padding-top: 26px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--radius-sm);
+  background: #f7f9fd;
 }
 .step__n {
-  position: absolute;
-  top: -14px;
-  left: 18px;
-  width: 36px;
-  height: 36px;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
   display: grid;
   place-items: center;
   border-radius: 50%;
   background: linear-gradient(180deg, var(--coral-2), var(--coral));
   color: #fff;
   font-weight: 900;
-  box-shadow: var(--shadow);
+  font-size: 0.9rem;
+  box-shadow: 0 2px 6px rgba(255, 94, 120, 0.4);
+}
+.step__body {
+  min-width: 0;
 }
 .step h3 {
-  margin-bottom: 6px;
+  margin-bottom: 4px;
+  font-size: 1rem;
 }
 .step p {
   color: var(--ink-soft);
   font-weight: 600;
+  font-size: 0.85rem;
+  line-height: 1.45;
   margin: 0;
 }
 .tiles-row {

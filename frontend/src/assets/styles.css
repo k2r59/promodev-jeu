@@ -269,16 +269,21 @@ h4 {
   padding: 0 14px 60px;
 }
 
-/* Écrans secondaires (classement, défis, aide, récompenses) : un bloc unique qui
-   remplit la hauteur disponible et défile en interne, plutôt que des cartes
-   empilées qui débordent sous le bandeau du bas. */
+/* Écrans secondaires (classement, défis, aide, récompenses).
+   Le retrait haut vaut partout : `main` n'en a pas, et sans lui la carte vient
+   se coller sous la barre du site. */
+.page {
+  padding-top: 14px;
+}
+
+/* Sur grand écran, ces pages deviennent un bloc unique qui remplit la hauteur et
+   défile en interne, plutôt que des cartes empilées débordant sous le bandeau. */
 @media (orientation: landscape) and (min-width: 1100px) and (min-height: 620px) {
   .page {
     height: 100%;
     min-height: 0;
     display: flex;
     flex-direction: column;
-    padding-top: 14px;
   }
   .page__card {
     flex: 1;

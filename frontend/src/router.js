@@ -30,8 +30,11 @@ export const router = createRouter({
 
 router.beforeEach((to) => {
   const auth = useAuthStore()
-  // Les écrans protégés renvoient à l'accueil, qui affiche le formulaire.
+  // Les écrans protégés renvoient à l'accueil AVEC le formulaire ouvert : depuis
+  // que l'accueil déconnecté est une page d'accroche, un simple retour laisserait
+  // le visiteur devant le cadeau, sans rien qui explique pourquoi son clic sur
+  // « Défis » n'a rien donné. `?mode=connexion` est ce que HomeView écoute.
   if (to.meta.requiresAuth && !auth.isAuth) {
-    return { name: 'home' }
+    return { name: 'home', query: { mode: 'connexion' } }
   }
 })
