@@ -14,14 +14,16 @@ const auth = useAuthStore()
 const ui = useUiStore()
 const route = useRoute()
 
-// Desktop déconnecté : le plateau est en vitrine, et le formulaire n'arrive
-// qu'au clic sur « C'est parti » (ou sur « Se connecter » dans la barre, qui
-// passe ?mode=connexion).
-//
-// En portrait, non : le formulaire d'emblée. La vitrine y coûterait un écran
-// entier à faire défiler avant d'atteindre le premier champ, alors qu'elle tient
-// à côté du jeu sur un grand écran.
-const showAuth = computed(() => !auth.isAuth && (ui.portrait || ui.authFormOpen))
+// Déconnecté, le formulaire ne s'affiche jamais de lui-même : il faut l'avoir
+// demandé, via « Se connecter » dans la barre (?mode=connexion) ou via
+// « C'est parti » sur le plateau.
+const showAuth = computed(() => !auth.isAuth && ui.authFormOpen)
+
+// Le plateau en vitrine, sur grand écran seulement : il y tient à côté du
+// cadeau et donne envie avant qu'on réclame un compte. En portrait il prendrait
+// tout l'écran et repousserait l'accroche des 1 000 € hors de vue — la page
+// déconnectée y reste une page d'accroche.
+const showBoard = computed(() => auth.isAuth || !ui.portrait)
 const ouvreFormulaire = () => (ui.authFormOpen = true)
 
 watch(
@@ -222,7 +224,7 @@ onUnmounted(() => ro?.disconnect())
          ouvre alors le formulaire, qui vient prendre exactement sa place. -->
     <section ref="centerEl" class="col col--center" :style="centerW ? { width: centerW + 'px' } : null">
       <AuthPanel v-if="showAuth" />
-      <GameStage v-else @auth="ouvreFormulaire" />
+      <GameStage v-else-if="showBoard" @auth="ouvreFormulaire" />
     </section>
 
     <!-- Colonne droite -->
