@@ -27,6 +27,12 @@
   /* Hauteur de la nav du bas. Elle est fixed et ne pousse donc rien : c'est
      cette réserve que le contenu se garde en dessous pour rester atteignable. */
   --nav-h: 56px;
+  /* Encoche et barre d'état, passées par une variable plutôt qu'appelées
+     directement : `env()` n'est pas surchargeable, donc impossible à éprouver
+     autrement qu'avec un vrai iPhone en main. Ici on peut poser une valeur et
+     vérifier que la mise en page réagit. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
   --font: 'Baloo 2', 'Trebuchet MS', 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 

@@ -129,7 +129,7 @@ const titre = computed(() => (mode.value === 'ios' ? 'Ajoutez le jeu à votre é
   z-index: 70;
   left: 8px;
   right: 8px;
-  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 8px);
+  bottom: calc(var(--nav-h) + var(--safe-bottom) + 8px);
   display: flex;
   align-items: center;
   gap: 10px;

@@ -149,7 +149,7 @@ function logout() {
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 22px 20px calc(22px + env(safe-area-inset-bottom));
+  padding: 22px 20px calc(22px + var(--safe-bottom));
   background: #fff;
   border-radius: 26px 26px 0 0;
   box-shadow: var(--shadow-lg);

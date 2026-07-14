@@ -165,7 +165,7 @@ function logout() {
      `main` : le bandeau d'arguments vient APRÈS main, il passait donc sous la
      nav (« DE SUPER RÉCOMPENSES » coupé), pendant que les 82px réservés à
      l'intérieur de main creusaient un vide sous le dernier bloc. */
-  padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
+  padding-bottom: calc(var(--nav-h) + var(--safe-bottom));
 }
 
 /* Écran de jeu portrait : le shell est cadré sur la fenêtre au pixel près, et
@@ -183,9 +183,14 @@ function logout() {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    /* Encoche en haut : le HUD passe dessous, le dégradé de plage occupe la
-       bande. Le bas est déjà réservé par le padding du shell. */
-    padding: env(safe-area-inset-top) 0 0;
+    /* Le HUD est le tout premier élément de l'écran de jeu : rien au-dessus de
+       lui ne le protège. Sous iOS, une page qu'on ne peut pas défiler (c'est le
+       cas ici : html est en overflow:hidden) voit Safari escamoter sa barre du
+       haut et le contenu remonte sous l'heure et la batterie. D'où l'encoche.
+       Le `max(..., 10px)` n'est pas une ceinture de plus : sans encoche l'écart
+       vaudrait zéro et le HUD collerait au bord. Le bas est déjà réservé par le
+       padding du shell. */
+    padding: max(var(--safe-top), 10px) 0 0;
   }
 }
 
@@ -419,7 +424,7 @@ function logout() {
   background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(10px);
   box-shadow: 0 -4px 20px rgba(43, 45, 90, 0.12);
-  padding: 0 4px env(safe-area-inset-bottom);
+  padding: 0 4px var(--safe-bottom);
   justify-content: space-around;
 }
 .bottomnav__link {
