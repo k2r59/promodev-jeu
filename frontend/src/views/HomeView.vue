@@ -551,7 +551,6 @@ onUnmounted(() => ro?.disconnect())
   .home {
     display: flex;
     flex-direction: column;
-    padding-top: 0;
     /* Indispensable : la règle de base pose `align-items: start` pour la grille
        desktop. En flex colonne, cette valeur empêche la colonne de s'étirer en
        largeur — le jeu se tassait sur la largeur de son contenu. */
@@ -584,10 +583,13 @@ onUnmounted(() => ro?.disconnect())
 
   /* Écran de jeu : il ne reste QUE le jeu. Le cadeau, les défis, le classement
      et les badges ont chacun leur onglet dans la nav du bas ; les empiler sous
-     le plateau ne ferait que rallonger une page qu'on ne défile pas. */
+     le plateau ne ferait que rallonger une page qu'on ne défile pas.
+     `padding-top: 0` ici SEULEMENT : le HUD doit être à fleur de barre. Sur la
+     page déconnectée, qui n'est pas le jeu, il collait le formulaire au header. */
   .app-shell--game .home {
     height: 100%;
     min-height: 0;
+    padding-top: 0;
     gap: 0;
   }
   .app-shell--game .col--left {

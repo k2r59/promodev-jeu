@@ -241,6 +241,7 @@ function logout() {
 .topbar__inner {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
   padding-top: 8px;
   padding-bottom: 8px;
@@ -470,7 +471,12 @@ main.container {
   .bottomnav {
     display: none;
   }
+  /* Ici c'est le `margin-left: auto` de .mainnav qui pousse nav et profil à
+     droite ; `space-between` en plus les écarterait les uns des autres. Il n'a
+     de sens que sur mobile, où la nav est masquée et ne pousse donc plus rien —
+     tout retombait à gauche. */
   .topbar__inner {
+    justify-content: flex-start;
     gap: 16px;
     padding-top: 10px;
     padding-bottom: 10px;
