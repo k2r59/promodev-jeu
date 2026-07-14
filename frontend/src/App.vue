@@ -152,6 +152,12 @@ function logout() {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
+  /* La nav du bas est `fixed` : elle ne pousse rien et recouvre le bas de
+     l'écran. La réserve se pose donc ici, sur le shell — et surtout pas sur
+     `main` : le bandeau d'arguments vient APRÈS main, il passait donc sous la
+     nav (« DE SUPER RÉCOMPENSES » coupé), pendant que les 82px réservés à
+     l'intérieur de main creusaient un vide sous le dernier bloc. */
+  padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
 }
 
 /* Écran de jeu portrait : le shell est cadré sur la fenêtre au pixel près, et
@@ -170,9 +176,8 @@ function logout() {
     flex-direction: column;
     overflow: hidden;
     /* Encoche en haut : le HUD passe dessous, le dégradé de plage occupe la
-       bande. La nav du bas étant fixed, la réserve du bas l'empêche de
-       recouvrir le dock des boosters. */
-    padding: env(safe-area-inset-top) 0 var(--nav-h);
+       bande. Le bas est déjà réservé par le padding du shell. */
+    padding: env(safe-area-inset-top) 0 0;
   }
 }
 
@@ -431,10 +436,9 @@ function logout() {
 .brand__logo {
   height: 34px;
 }
-/* Réserve sous le contenu pour la nav du bas, qui est fixed et ne pousse donc
-   rien. L'écran de jeu a la sienne (voir plus haut). */
+/* Simple respiration en fin de page : la réserve pour la nav est sur le shell. */
 main.container {
-  padding-bottom: calc(var(--nav-h) + 26px);
+  padding-bottom: 24px;
 }
 
 /* Écrans étroits (iPhone SE 1re gén. 320px, Galaxy Fold fermé 344px). Le
@@ -475,6 +479,10 @@ main.container {
      droite ; `space-between` en plus les écarterait les uns des autres. Il n'a
      de sens que sur mobile, où la nav est masquée et ne pousse donc plus rien —
      tout retombait à gauche. */
+  /* La nav du bas disparaît ici : plus rien à lui réserver. */
+  .app-shell {
+    padding-bottom: 0;
+  }
   .topbar__inner {
     justify-content: flex-start;
     gap: 16px;

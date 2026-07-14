@@ -19,5 +19,15 @@ export const useUiStore = defineStore('ui', () => {
   // aux tests, où le store est bien démonté.
   onUnmounted(() => mq.removeEventListener('change', onChange))
 
-  return { portrait }
+  // Déconnecté, l'accueil montre le plateau en vitrine : on voit le jeu avant
+  // qu'on nous demande quoi que ce soit. Le formulaire n'arrive qu'au clic sur
+  // « C'est parti » (ou sur « Se connecter » dans la barre).
+  //
+  // L'état vit ici parce que le shell en dépend autant que la vue : tant que le
+  // plateau est en vitrine, l'écran est cadré comme le jeu ; dès que le
+  // formulaire s'ouvre, il faut une page qui défile — sinon ses derniers champs
+  // sortent de l'écran sur un téléphone.
+  const authFormOpen = ref(false)
+
+  return { portrait, authFormOpen }
 })

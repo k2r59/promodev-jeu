@@ -108,9 +108,12 @@ const features = [
   color: #4a4f7d;
 }
 
-/* Sous 861px la nav mobile occupe déjà le bas : le bandeau redevient un bloc
-   normal en fin de page, sur 2 colonnes. */
-@media (max-width: 860px) {
+/* Partout où la nav du bas est affichée, elle occupe déjà le bas de l'écran : le
+   bandeau redevient un bloc normal en fin de page, sur 2 colonnes. S'il restait
+   collant, il se glisserait SOUS la nav (`sticky bottom: 0` se cale sur le bas
+   du viewport, pas sur le padding du shell). Le seuil doit donc rester identique
+   à celui de la nav dans App.vue. */
+@media (max-width: 899px), (orientation: portrait) and (max-width: 1100px) {
   .fbar {
     position: static;
     box-shadow: none;

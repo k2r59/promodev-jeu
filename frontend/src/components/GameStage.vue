@@ -14,6 +14,11 @@ import { sfx } from '../game/sound.js'
 const auth = useAuthStore()
 const ui = useUiStore()
 
+// Déconnecté, le plateau est une vitrine : on le montre, mais « C'est parti »
+// demande le compte au lieu de lancer une partie. Un score ne se joue pas sans
+// pouvoir être enregistré.
+const emit = defineEmits(['auth'])
+
 const GAME_SECONDS = 120
 const OBJECTIVE = 3000
 
@@ -51,6 +56,7 @@ function onFloating({ text }) {
 }
 
 async function startGame() {
+  if (!auth.isAuth) return emit('auth')
   phase.value = 'countdown'
   countdownNum.value = 3
   board.value?.reset()
@@ -168,7 +174,10 @@ onUnmounted(() => clearInterval(timerId))
         <div class="overlay__card">
           <div class="overlay__emoji float">🏖️</div>
           <h2>Prêt à jouer ?</h2>
-          <p class="muted">2 minutes chrono pour aligner un max de tuiles estivales et exploser votre score !</p>
+          <p class="muted">
+            2 minutes chrono pour aligner un max de tuiles estivales et exploser votre score !
+            <template v-if="!auth.isAuth"><br />Créez votre compte en 30 secondes pour lancer votre première partie.</template>
+          </p>
           <button class="btn btn--lg" @click="startGame">▶ C'est parti !</button>
         </div>
       </div>

@@ -1,7 +1,9 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, watch, onMounted, onUnmounted, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { api } from '../api/client.js'
 import { useAuthStore } from '../stores/auth.js'
+import { useUiStore } from '../stores/ui.js'
 import GameStage from '../components/GameStage.vue'
 import AuthPanel from '../components/AuthPanel.vue'
 import imgPrize from '../assets/blocks/prize.png'
@@ -9,6 +11,34 @@ import imgPrize from '../assets/blocks/prize.png'
 import imgPalmier from '../assets/nav/accueil.png'
 
 const auth = useAuthStore()
+const ui = useUiStore()
+const route = useRoute()
+
+// Desktop déconnecté : le plateau est en vitrine, et le formulaire n'arrive
+// qu'au clic sur « C'est parti » (ou sur « Se connecter » dans la barre, qui
+// passe ?mode=connexion).
+//
+// En portrait, non : le formulaire d'emblée. La vitrine y coûterait un écran
+// entier à faire défiler avant d'atteindre le premier champ, alors qu'elle tient
+// à côté du jeu sur un grand écran.
+const showAuth = computed(() => !auth.isAuth && (ui.portrait || ui.authFormOpen))
+const ouvreFormulaire = () => (ui.authFormOpen = true)
+
+watch(
+  () => route.query.mode,
+  (mode) => {
+    if (mode) ui.authFormOpen = true
+  },
+  { immediate: true }
+)
+// Se déconnecter ramène à la vitrine, pas au formulaire : on ne réclame pas un
+// compte à quelqu'un qui vient de partir.
+watch(
+  () => auth.isAuth,
+  (v) => {
+    if (!v) ui.authFormOpen = false
+  }
+)
 
 const challenges = ref([])
 const board = ref([])
@@ -187,11 +217,12 @@ onUnmounted(() => ro?.disconnect())
 
     </aside>
 
-    <!-- Colonne centrale : le jeu, ou le formulaire à sa place tant qu'on n'est
-         pas connecté. Les deux occupent exactement le même espace. -->
+    <!-- Colonne centrale. Déconnecté, on montre quand même le plateau : on voit
+         le jeu avant qu'on nous demande quoi que ce soit, et « C'est parti »
+         ouvre alors le formulaire, qui vient prendre exactement sa place. -->
     <section ref="centerEl" class="col col--center" :style="centerW ? { width: centerW + 'px' } : null">
-      <GameStage v-if="auth.isAuth" />
-      <AuthPanel v-else />
+      <AuthPanel v-if="showAuth" />
+      <GameStage v-else @auth="ouvreFormulaire" />
     </section>
 
     <!-- Colonne droite -->
