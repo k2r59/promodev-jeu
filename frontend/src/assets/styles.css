@@ -315,12 +315,21 @@ h4 {
   .page__card::-webkit-scrollbar {
     width: 6px;
   }
+  /* La piste s'arrête avant les angles : la carte est arrondie (var(--radius) =
+     22px) mais la barre, elle, est droite et allait jusqu'aux extrémités — elle
+     dépassait donc de la courbe, en haut comme en bas. La marge vaut le rayon,
+     c'est ce qui la fait tenir DANS le bloc. */
   .page__card::-webkit-scrollbar-track {
     background: transparent;
+    margin: var(--radius) 0;
   }
+  /* La bordure transparente + background-clip décalent le pouce du bord droit :
+     6px de large dont 1px de marge de chaque côté, sinon il colle à l'arête. */
   .page__card::-webkit-scrollbar-thumb {
     background: rgba(57, 182, 255, 0.35);
     border-radius: 999px;
+    border: 1px solid transparent;
+    background-clip: padding-box;
   }
   .page__card::-webkit-scrollbar-thumb:hover {
     background: rgba(57, 182, 255, 0.55);
