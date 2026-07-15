@@ -108,6 +108,16 @@ async function submitScore() {
   }
 }
 
+// Les défis du jour qui restent à décrocher. La réponse de fin de partie les
+// porte déjà (routes/game.js les renvoie à jour) : aucun appel à ajouter, et
+// surtout aucun risque d'afficher un état périmé.
+//
+// Réservé au portrait : sur desktop, le hub montre les défis en permanence dans
+// sa colonne de gauche, les répéter ici serait du bruit. Sur mobile il n'y a pas
+// de colonne, et l'écran de fin est justement le moment où le joueur décide s'il
+// relance — c'est là que l'information vaut quelque chose.
+const remainingChallenges = computed(() => (result.value?.challenges || []).filter((c) => !c.done))
+
 function replay() {
   result.value = null
   live.score = 0
@@ -213,6 +223,17 @@ onUnmounted(() => clearInterval(timerId))
                 {{ c.label }} <span class="pill pill--reward">+{{ c.reward }} 💎</span>
               </div>
             </div>
+            <!-- Après les défis réussis, jamais avant : on félicite d'abord, on
+                 relance ensuite. -->
+            <div v-if="ui.portrait && remainingChallenges.length" class="unlocks unlocks--todo">
+              <div class="unlocks__title">🎯 Encore à décrocher aujourd'hui</div>
+              <div v-for="c in remainingChallenges" :key="c.id" class="unlock-row">
+                <span class="todo__lbl">{{ c.icon }} {{ c.label }}</span>
+                <span class="todo__prog">{{ c.progress }}/{{ c.goal }}</span>
+                <span class="pill pill--reward">+{{ c.reward }} 💎</span>
+              </div>
+            </div>
+
             <div v-if="result.gained.newBadges?.length" class="unlocks">
               <div class="unlocks__title">🏅 Nouveaux badges</div>
               <div class="badge-strip">
@@ -430,6 +451,27 @@ onUnmounted(() => clearInterval(timerId))
   font-size: 0.9rem;
   font-weight: 700;
   padding: 3px 0;
+}
+/* Bleu et non le jaune des défis réussis : c'est un rappel, pas une
+   récompense. Le joueur doit distinguer d'un coup d'œil ce qu'il a gagné de ce
+   qu'il lui reste à faire. */
+.unlocks--todo {
+  background: #eef7ff;
+}
+/* Le libellé cède la place en premier : la progression et la récompense sont
+   des valeurs courtes qu'on ne peut pas tronquer sans les rendre fausses. */
+.todo__lbl {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.todo__prog {
+  flex-shrink: 0;
+  margin: 0 8px;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
 }
 .pill--reward {
   background: #fff;
