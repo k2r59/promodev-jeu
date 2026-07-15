@@ -6,6 +6,7 @@ import { useRoute } from 'vue-router'
 import { ShieldCheck } from 'lucide-vue-next'
 import { AVATARS, DEFAULT_AVATAR } from '../avatars.js'
 import Avatar from './Avatar.vue'
+import PromoBlock from './PromoBlock.vue'
 import { useAuthStore } from '../stores/auth.js'
 
 const auth = useAuthStore()
@@ -198,6 +199,12 @@ async function submit() {
           {{ mode === 'register' ? 'Se connecter' : "S'inscrire" }}
         </button>
       </p>
+
+      <!-- Le prospect vient de donner sa raison sociale : c'est le moment où
+           dire qui la reçoit. Le bloc s'adapte seul à la largeur (container
+           query), il tient donc aussi bien ici, sous une colonne étroite, que
+           sur la pleine largeur de la page d'aide. -->
+      <PromoBlock class="apanel__promo" />
     </div>
   </div>
 </template>

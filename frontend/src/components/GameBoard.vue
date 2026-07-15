@@ -535,11 +535,12 @@ onUnmounted(() => {
         :key="b.key"
         class="booster"
         :class="{ 'booster--armed': armedBooster === b.key, 'booster--empty': b.count <= 0 }"
+        :style="{ '--b-tint': b.tint, '--b-edge': b.edge, '--b-ink': b.ink }"
         :disabled="b.count <= 0 || !active"
         :title="b.desc"
         @click="armBooster(b.key)"
       >
-        <span class="booster__emoji">{{ b.emoji }}</span>
+        <img class="booster__img" :src="b.img" :alt="b.emoji" />
         <span class="booster__count">{{ b.count }}</span>
         <span class="booster__label">{{ b.label }}</span>
       </button>
@@ -713,6 +714,9 @@ onUnmounted(() => {
 }
 /* Libellé à droite de l'icône plutôt qu'en dessous : la rangée est deux fois
    moins haute, et toute la hauteur reprise ici va au plateau. */
+/* Chaque booster porte sa teinte, la même que sur la page d'aide. Les couleurs
+   viennent de BOOSTERS (gameData.js) via des variables posées en style inline :
+   les redéclarer ici ferait diverger le dock et l'aide à la première retouche. */
 .booster {
   position: relative;
   display: flex;
@@ -720,7 +724,8 @@ onUnmounted(() => {
   gap: 8px;
   padding: 7px 14px 7px 11px;
   border-radius: 14px;
-  background: linear-gradient(180deg, #fff, #f3f6fc);
+  background: var(--b-tint, #fff);
+  border: 1.5px solid var(--b-edge, transparent);
   box-shadow: var(--shadow);
   transition: transform 0.1s, box-shadow 0.15s;
 }
@@ -734,8 +739,11 @@ onUnmounted(() => {
 .booster--empty {
   opacity: 0.45;
 }
-.booster__emoji {
-  font-size: 1.7rem;
+.booster__img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  display: block;
 }
 .booster__count {
   position: absolute;
@@ -755,7 +763,7 @@ onUnmounted(() => {
 .booster__label {
   font-size: 0.8rem;
   font-weight: 800;
-  color: var(--ink-soft);
+  color: var(--b-ink, var(--ink-soft));
   white-space: nowrap;
 }
 
@@ -787,9 +795,11 @@ onUnmounted(() => {
   .booster:active:not(:disabled) {
     transform: scale(0.94);
   }
-  .booster__emoji {
-    font-size: 1.5rem;
-    line-height: 1.1;
+  /* Le dock au pouce empile icône et libellé : l'icône rétrécit pour que les
+     trois boosters tiennent sur la largeur du plateau. */
+  .booster__img {
+    width: 26px;
+    height: 26px;
   }
   .booster__label {
     font-size: 0.62rem;

@@ -10,6 +10,9 @@ import imgCocktail from '../assets/tiles/cocktail.png'
 import imgPalmier from '../assets/tiles/palmier.png'
 import imgTongs from '../assets/tiles/tongs.png'
 import imgLunettes from '../assets/tiles/lunettes.png'
+import imgBombe from '../assets/boosters/bombe.png'
+import imgEclair from '../assets/boosters/eclair.png'
+import imgVague from '../assets/boosters/vague.png'
 
 // Les tuiles "été". index = type.
 // `color` = teinte dominante de l'illustration (halo de sélection, fonds de démo).
@@ -43,9 +46,40 @@ export const TILES = [
 ]
 
 // Boosters activables depuis l'inventaire.
+// `emoji` reste le repli si l'image ne charge pas, comme pour les tuiles.
+// `tint` / `edge` : la couleur du booster, définie ICI et pas dans chaque vue.
+// Le dock sous le plateau et la page d'aide les affichaient avec des habillages
+// sans rapport ; une seule source évite qu'ils divergent à la prochaine retouche.
 export const BOOSTERS = {
-  bombe: { key: 'bombe', emoji: '💣', label: 'Bombe', desc: 'Détruit une zone 3×3' },
-  eclair: { key: 'eclair', emoji: '⚡', label: 'Éclair', desc: 'Détruit la ligne et la colonne' },
-  vague: { key: 'vague', emoji: '🌊', label: 'Vague', desc: 'Détruit toutes les tuiles identiques' }
+  bombe: {
+    key: 'bombe',
+    emoji: '💣',
+    img: imgBombe,
+    label: 'Bombe',
+    desc: 'Détruit une zone 3×3',
+    tint: '#fff1f5',
+    edge: '#ffc2d2',
+    ink: '#e8365c'
+  },
+  eclair: {
+    key: 'eclair',
+    emoji: '⚡',
+    img: imgEclair,
+    label: 'Éclair',
+    desc: 'Détruit la ligne et la colonne',
+    tint: '#fff9e8',
+    edge: '#ffe08a',
+    ink: '#d18f00'
+  },
+  vague: {
+    key: 'vague',
+    emoji: '🌊',
+    img: imgVague,
+    label: 'Vague',
+    desc: 'Détruit toutes les tuiles identiques',
+    tint: '#eff7ff',
+    edge: '#b6dffb',
+    ink: '#1a8fd0'
+  }
 }
 
