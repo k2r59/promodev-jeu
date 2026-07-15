@@ -57,6 +57,9 @@ function onFloating({ text }) {
 
 async function startGame() {
   if (!auth.isAuth) return emit('auth')
+  // Avant le décompte, pas après : c'est l'accusé de réception du clic. Les
+  // trois bips du décompte viennent par-dessus, ils ne se marchent pas dessus.
+  sfx.jouer()
   phase.value = 'countdown'
   countdownNum.value = 3
   board.value?.reset()

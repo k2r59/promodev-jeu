@@ -314,6 +314,9 @@ async function resolve() {
     if (combo >= 2) {
       comboPopup.value = combo
       emit('combo', combo)
+      // Une seule fois par cascade : au palier où le combo naît. Les suivants
+      // sont portés par la montée en pitch de sfx.match().
+      if (combo === 2) sfx.combo()
     }
     emit('floating', { text: `+${gained}`, combo })
     emitUpdate()
@@ -350,6 +353,7 @@ async function resolve() {
 // --- Boosters ---
 function armBooster(key) {
   if (!canPlay.value || inventory[key] <= 0) return
+  if ((cooldowns[key] || 0) > Date.now()) return // en recharge
   armedBooster.value = armedBooster.value === key ? null : key
   selected.value = null
   if (armedBooster.value) haptic.tap()
@@ -365,11 +369,16 @@ async function applyBooster(r, c) {
   const cells = boosterCells(g, key, r, c)
   inventory[key]--
   stats.boostersUsed++
+  // Recharge seulement s'il en reste : sur le dernier, le compteur à 0 dit déjà
+  // qu'il n'y en a plus. Un décompte sur un booster épuisé laisserait croire
+  // qu'il va revenir.
+  if (inventory[key] > 0) cooldowns[key] = Date.now() + COOLDOWN_MS
 
   const gained = cells.size * 15
   stats.score += gained
   emit('floating', { text: `+${gained}`, combo: 0 })
-  sfx.booster()
+  // La clé choisit le son : la bombe explose, l'éclair claque, la vague déferle.
+  sfx.booster(key)
   haptic.booster()
 
   cells.forEach((k) => clearing.add(k))
@@ -399,13 +408,45 @@ function reset() {
   busy.value = false
   Object.assign(inventory, { bombe: 3, eclair: 2, vague: 1 })
   Object.assign(stats, { score: 0, maxCombo: 0, boostersUsed: 0, matches: 0 })
+  // Sans ça, une recharge entamée à la fin d'une partie amputerait la suivante :
+  // le joueur relance et trouve ses boosters déjà bloqués.
+  Object.keys(cooldowns).forEach((k) => delete cooldowns[k])
   emitUpdate()
 }
 
 defineExpose({ reset, addBooster, stats })
 
+// --- Recharge des boosters -------------------------------------------------
+// Après usage, un booster est indisponible 20s. Sans ça, un joueur pouvait vider
+// son inventaire en trois secondes au lancement et le reste de la partie n'avait
+// plus de relief : le booster redevient une décision de timing.
+//
+// `clock` est un tick à 250ms plutôt qu'un timer par booster : un seul
+// intervalle à nettoyer, et la pastille reste fluide sans compter la seconde à
+// la main. Nommé `clock` et non `now` : la boucle d'animation a déjà un `now`
+// (l'horodatage rAF), qui l'aurait masqué en silence.
+const COOLDOWN_MS = 20000
+const cooldowns = reactive({})
+const clock = ref(Date.now())
+let coolTick = null
+
+onMounted(() => {
+  coolTick = setInterval(() => (clock.value = Date.now()), 250)
+})
+onUnmounted(() => clearInterval(coolTick))
+
 const boosterList = computed(() =>
-  Object.values(BOOSTERS).map((b) => ({ ...b, count: inventory[b.key] }))
+  Object.values(BOOSTERS).map((b) => {
+    const until = cooldowns[b.key] || 0
+    return {
+      ...b,
+      count: inventory[b.key],
+      // Secondes restantes, arrondies au SUPÉRIEUR : afficher « 0 » pendant une
+      // seconde alors que le booster est encore bloqué serait un mensonge.
+      // `clock.value` est lu ici : c'est ce qui rend la liste réactive au tick.
+      cooling: until > clock.value ? Math.ceil((until - clock.value) / 1000) : 0
+    }
+  })
 )
 
 // Le format pilote le quadrillage, la taille des tuiles et le rectangle du
@@ -534,14 +575,22 @@ onUnmounted(() => {
         v-for="b in boosterList"
         :key="b.key"
         class="booster"
-        :class="{ 'booster--armed': armedBooster === b.key, 'booster--empty': b.count <= 0 }"
+        :class="{
+          'booster--armed': armedBooster === b.key,
+          'booster--empty': b.count <= 0,
+          'booster--cooling': b.cooling > 0
+        }"
         :style="{ '--b-tint': b.tint, '--b-edge': b.edge, '--b-ink': b.ink }"
-        :disabled="b.count <= 0 || !active"
-        :title="b.desc"
+        :disabled="b.count <= 0 || !active || b.cooling > 0"
+        :title="b.cooling > 0 ? `${b.label} — disponible dans ${b.cooling}s` : b.desc"
         @click="armBooster(b.key)"
       >
         <img class="booster__img" :src="b.img" :alt="b.emoji" />
-        <span class="booster__count">{{ b.count }}</span>
+        <!-- La pastille du compteur laisse la place au décompte : deux chiffres
+             au même endroit se disputeraient le coin. Pendant la recharge,
+             c'est le temps qui compte — le stock, lui, n'a pas changé. -->
+        <span v-if="b.cooling > 0" class="booster__count booster__count--cool">{{ b.cooling }}</span>
+        <span v-else class="booster__count">{{ b.count }}</span>
         <span class="booster__label">{{ b.label }}</span>
       </button>
     </div>
@@ -738,6 +787,24 @@ onUnmounted(() => {
 }
 .booster--empty {
   opacity: 0.45;
+}
+/* En recharge : grisé, mais moins effacé qu'un booster épuisé — celui-ci
+   revient, et le décompte doit rester lisible. `grayscale` sur l'icône seule :
+   ternir la pastille du décompte la rendrait illisible. */
+.booster--cooling {
+  opacity: 0.72;
+}
+.booster--cooling .booster__img {
+  filter: grayscale(1);
+}
+.booster--cooling .booster__label {
+  color: var(--ink-soft);
+}
+/* Bleu et non corail : ce n'est plus un stock mais un temps. La distinction
+   compte, les deux chiffres occupent le même coin. */
+.booster__count--cool {
+  background: var(--sky);
+  font-variant-numeric: tabular-nums;
 }
 .booster__img {
   width: 30px;

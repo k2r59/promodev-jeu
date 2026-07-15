@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { setSfxVolume } from '../game/sound.js'
 import { setHapticsEnabled } from '../game/haptics.js'
-import musicUrl from '../assets/audio/musique.m4a'
+import musicUrl from '../assets/audio/musique.mp3'
 
 const KEY = 'promodev_ete_audio'
 
@@ -38,6 +38,10 @@ export const useAudioStore = defineStore('audio', () => {
   function audio() {
     if (!el) {
       el = new Audio(musicUrl)
+      // La piste est une boucle de 28s. Le fichier a été rogné au ras de la
+      // musique : la source portait 1s de silence au début et 2,2s à la fin,
+      // soit un trou de 3 secondes à chaque tour. Ne pas remplacer ce fichier
+      // par un export brut sans vérifier ses extrémités.
       el.loop = true
       el.preload = 'none' // rien n'est téléchargé tant que le son est coupé
     }
