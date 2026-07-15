@@ -1,6 +1,6 @@
 <script setup>
 import { TILES, BOOSTERS } from '../game/gameData.js'
-import { Mail, Info } from 'lucide-vue-next'
+import { Mail, Info, Globe } from 'lucide-vue-next'
 import imgPalmier from '../assets/nav/accueil.png'
 import logoUrl from '../assets/brand/logo.png'
 
@@ -105,9 +105,16 @@ const MAILTO = 'mailto:contact@promo.dev?subject=' + encodeURIComponent("Le Jeu 
           de celle-ci, ce sont 1 000 € de remise sur la vôtre.
         </p>
         <p class="promo__ask">Une idée d'opération ? Parlons-en.</p>
-        <a class="btn btn--sea promo__cta" :href="MAILTO">
-          <Mail :size="16" aria-hidden="true" /> contact@promo.dev
-        </a>
+        <div class="promo__actions">
+          <a class="btn btn--sea promo__cta" :href="MAILTO">
+            <Mail :size="16" aria-hidden="true" /> contact@promo.dev
+          </a>
+          <!-- `noopener` : sans lui, la page ouverte garde une poignée sur la
+               nôtre via window.opener. `noreferrer` va avec par habitude. -->
+          <a class="btn btn--ghost promo__cta" href="https://promo.dev" target="_blank" rel="noopener noreferrer">
+            <Globe :size="16" aria-hidden="true" /> Visiter le site
+          </a>
+        </div>
       </div>
     </section>
     </div>
@@ -371,8 +378,15 @@ const MAILTO = 'mailto:contact@promo.dev?subject=' + encodeURIComponent("Le Jeu 
   color: var(--ink) !important;
   font-weight: 800 !important;
 }
-.promo__cta {
+/* `wrap` : les deux boutons ne tiennent pas côte à côte dans la colonne étroite
+   d'un mobile, ils passent alors l'un sous l'autre plutôt que de déborder. */
+.promo__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-top: 10px;
+}
+.promo__cta {
   padding: 10px 18px;
   font-size: 0.9rem;
 }
@@ -386,6 +400,11 @@ const MAILTO = 'mailto:contact@promo.dev?subject=' + encodeURIComponent("Le Jeu 
     flex-direction: column;
     text-align: center;
     gap: 12px;
+  }
+  /* Le bloc passe en centré : des boutons restés à gauche sous un texte centré
+     se verraient comme un décrochage. */
+  .promo__actions {
+    justify-content: center;
   }
 }
 </style>
