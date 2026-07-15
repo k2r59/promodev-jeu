@@ -379,17 +379,69 @@ onMounted(load)
 .signin__cta:active {
   box-shadow: 0 1px 0 #1f8fd0, var(--shadow);
 }
-/* Sous ~560px la carte n'a plus la largeur pour trois colonnes : le bouton
-   passe dessous et prend toute la largeur, plutôt que d'écraser le texte. */
+/* --- Colonnes étroites -----------------------------------------------------
+   Trois choses cèdent, dans cet ordre : le décompte quitte la ligne du titre,
+   les onglets perdent leur icône, puis tout se resserre. */
 @media (max-width: 560px) {
+  /* `flex: 1 1 220px` sur le texte, et non `flex: 1` : avec une base de 0 il
+     se serait comprimé à l'infini pour garder le décompte sur la ligne, et
+     c'est le titre qui aurait été haché. Là, sous 220px de place, c'est le
+     décompte qui passe à la ligne — il garde sa largeur naturelle. */
+  .lb__head {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .lb__intro {
+    flex: 1 1 220px;
+  }
+  .lb__badge {
+    width: 52px;
+    height: 52px;
+  }
+  .lb__badge :deep(svg) {
+    width: 24px;
+    height: 24px;
+  }
+  .lb__head h1 {
+    font-size: 1.5rem;
+  }
+  .lb__intro p {
+    font-size: 0.9rem;
+  }
+  /* La carte n'a plus la largeur pour trois colonnes : le bouton passe dessous
+     sur toute la largeur, plutôt que d'écraser le texte. */
   .signin {
     flex-wrap: wrap;
+  }
+  .signin__txt {
+    flex: 1 1 160px;
   }
   .signin__cta {
     width: 100%;
   }
-  .lb__head {
-    flex-wrap: wrap;
+  .empty {
+    padding: 26px 14px;
+  }
+  .empty__art {
+    width: 88px;
+    height: 88px;
+    margin-bottom: 14px;
+  }
+  .empty__title {
+    font-size: 1.1rem;
+  }
+}
+/* Quatre onglets « icône + mot » demandent ~92px chacun ; sous 520px la carte
+   n'en offre que ~80. C'est l'icône qui saute, pas le mot : elle n'était qu'un
+   repère, le libellé porte le sens. */
+@media (max-width: 520px) {
+  .tabs button {
+    gap: 0;
+    padding: 10px 4px;
+    font-size: 0.8rem;
+  }
+  .tabs button :deep(svg) {
+    display: none;
   }
 }
 </style>
