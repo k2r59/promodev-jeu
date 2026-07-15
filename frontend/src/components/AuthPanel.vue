@@ -413,6 +413,13 @@ async function submit() {
   margin-bottom: 0;
   font-size: 0.9rem;
 }
+/* Le bloc de marque n'est pas la suite du formulaire, c'est un autre sujet :
+   il lui faut nettement plus d'air que l'espacement interne des champs, sinon
+   il colle au « Déjà un compte ? » et se lit comme sa continuation. */
+.apanel__promo {
+  display: block;
+  margin-top: 26px;
+}
 .link-btn {
   background: none;
   color: var(--sky);
