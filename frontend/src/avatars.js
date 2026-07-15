@@ -16,18 +16,28 @@
 // tri par nom suffit à garantir qu'aucun genre n'apparaisse en bloc. C'est le
 // nommage qui porte le mélange : pas de tri à refaire, pas de tri à oublier.
 
-const files = import.meta.glob('./assets/avatars/*.png', { eager: true, import: 'default' })
+const files = import.meta.glob('./assets/avatars/*.svg', { eager: true, import: 'default' })
 
 export const AVATARS = Object.keys(files)
   .sort()
-  .map((path) => ({ key: 'a' + path.match(/avatar-(\d+)\.png$/)[1], img: files[path] }))
+  .map((path) => ({ key: 'a' + path.match(/avatar-(\d+)\.svg$/)[1], img: files[path] }))
 
 const BY_KEY = new Map(AVATARS.map((a) => [a.key, a.img]))
 
 export const DEFAULT_AVATAR = AVATARS[0].key
 
-// null = ce n'est pas une clé connue (emoji d'un ancien compte, ou clé retirée
-// du dossier). À l'appelant de retomber sur l'affichage texte.
+// null = ce n'est pas une clé connue. À l'appelant de retomber sur le texte.
+//
+// Le repli par modulo n'est pas une coquetterie : le jeu est passé de 40 à 20
+// avatars alors qu'il était EN LIGNE. Des comptes portent donc des clés a21…a40
+// qui n'existent plus. Sans ce rattrapage, ces joueurs verraient la chaîne « a27 »
+// écrite en toutes lettres à la place de leur tête. On leur rend une image
+// stable (toujours la même) en attendant que la migration serveur leur en
+// réattribue une pour de bon.
 export function avatarImg(value) {
-  return BY_KEY.get(value) || null
+  const direct = BY_KEY.get(value)
+  if (direct) return direct
+  const m = /^a(\d+)$/.exec(value || '')
+  if (m && AVATARS.length) return AVATARS[(Number(m[1]) - 1) % AVATARS.length].img
+  return null
 }

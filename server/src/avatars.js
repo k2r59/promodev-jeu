@@ -7,7 +7,11 @@
 // déclarer moins rend les dernières images inattribuables. Les deux se voient
 // tout de suite, mais il n'y a pas de garde-fou automatique : c'est un fichier
 // Node, il ne peut pas lire le glob de Vite.
-export const AVATAR_COUNT = 40
+// Passé de 40 à 20 alors que le jeu tournait : les clés a21…a40 attribuées
+// entre-temps ne sont donc plus valides. isAvatarKey() les rejette, ce qui est
+// voulu — un nouveau passage de scripts/migrate-avatars.js leur redonne une clé
+// existante. Côté affichage, le front les rattrape par modulo en attendant.
+export const AVATAR_COUNT = 20
 
 export const AVATAR_KEYS = Array.from({ length: AVATAR_COUNT }, (_, i) => 'a' + String(i + 1).padStart(2, '0'))
 

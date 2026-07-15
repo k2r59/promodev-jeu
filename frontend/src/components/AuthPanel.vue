@@ -131,8 +131,8 @@ async function submit() {
                   :aria-label="`Avatar ${i + 1}`"
                   @click="pickAvatar(a.key)"
                 >
-                  <!-- 40 images d'un coup, soit ~1 Mo : `lazy` laisse le
-                       navigateur ne charger que ce qui entre dans le popover. -->
+                  <!-- `lazy` par prudence : en SVG les 20 pèsent 136 ko en tout,
+                       mais rien n'oblige à les charger avant d'ouvrir le menu. -->
                   <img class="avatar-opt__img" :src="a.img" alt="" loading="lazy" />
                 </button>
               </div>
