@@ -252,6 +252,15 @@ onUnmounted(() => clearInterval(timerId))
   height: var(--hud-h);
   padding: 0 16px;
   flex-shrink: 0;
+  /* Sans ce z-index, le popover du son passait SOUS le plateau. Le HUD porte la
+     classe `card`, dont le `backdrop-filter` crée un contexte d'empilement :
+     le z-index 60 du popover y restait enfermé et ne pouvait plus rivaliser
+     avec .board-zone, qui vient après dans le DOM. C'est donc le HUD entier
+     qu'il faut élever, pas le popover — augmenter son z-index n'aurait servi à
+     rien. 20 : au-dessus du plateau, sous la barre du site (50) et la nav (60).
+     L'overlay de fin de partie n'est pas concerné, il vit dans .board-zone et
+     ne couvre que le plateau. */
+  z-index: 20;
 }
 .hud__item {
   display: flex;
