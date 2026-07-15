@@ -364,26 +364,26 @@ import imgPalmier from '../assets/nav/accueil.png'
   margin-bottom: 10px;
   font-size: 1.3rem;
 }
+/* La grille passe à une colonne : la carte occupe alors toute la largeur, donc
+   l'illustration a PLUS de place qu'en deux colonnes. Elle garde sa taille —
+   la réduire ici serait à l'envers. */
 @media (max-width: 620px) {
   .steps {
     grid-template-columns: 1fr;
-  }
-  /* --cell et NON width : la largeur seule ne redimensionnerait pas le sprite,
-     on verrait déborder la case voisine. */
-  .step__art {
-    --cell: 88px;
   }
   .block {
     margin-top: 26px;
   }
 }
-/* Sur un 390px, une fois retirés le container, le padding de carte et la
-   pastille du numéro, il reste ~284px à partager. À 104px l'illustration ne
-   laissait que ~170px au texte, soit une vingtaine de caractères par ligne :
-   elle rétrécit plutôt que de hacher le paragraphe. */
+/* Sur un 390px de large, une fois retirés le container, le padding de carte et
+   la pastille du numéro, il reste ~278px à partager entre le texte et l'image.
+   À 132px il ne resterait que ~136px au texte, soit une quinzaine de caractères
+   par ligne : l'illustration cède plutôt que de hacher le paragraphe.
+   --cell et NON width : la largeur seule ne remettrait pas le sprite à
+   l'échelle, on verrait déborder la case voisine. */
 @media (max-width: 420px) {
   .step__art {
-    --cell: 72px;
+    --cell: 100px;
   }
   .tile-demo {
     width: 52px;
