@@ -4,10 +4,7 @@ import { api } from '../api/client.js'
 import { useAuthStore } from '../stores/auth.js'
 import imgCoffre from '../assets/features/recompenses.png'
 import imgPalmier from '../assets/nav/accueil.png'
-
-// Nommés d'après les clés du serveur : aucune table de correspondance à tenir.
-const BADGE_IMGS = import.meta.glob('../assets/badges/*.png', { eager: true, import: 'default' })
-const badgeImg = (key) => BADGE_IMGS[`../assets/badges/${key}.png`]
+import { badgePos } from '../badges.js'
 
 const auth = useAuthStore()
 const badges = ref([])
@@ -82,10 +79,12 @@ onMounted(load)
       <div v-else class="badge-grid">
         <div v-for="b in badges" :key="b.key" class="badge" :class="{ locked: !b.unlocked }">
           <div class="badge__visual">
-            <img class="badge__hex" :src="badgeImg(b.key)" :alt="b.label" />
+            <!-- Le libellé est peint dans le ruban : l'afficher sous le badge
+                 le dirait deux fois. La description, elle, reste — c'est elle
+                 qui apprend au joueur comment le décrocher. -->
+            <span class="badge__hex" role="img" :aria-label="b.label" :style="{ backgroundPosition: badgePos(b.key) }"></span>
             <span v-if="!b.unlocked" class="badge__lock" aria-label="Verrouillé">🔒</span>
           </div>
-          <div class="badge__label">{{ b.label }}</div>
           <div class="badge__desc">{{ b.desc }}</div>
         </div>
       </div>
@@ -237,10 +236,17 @@ onMounted(load)
   width: 76px;
   margin: 0 auto 10px;
 }
+/* Case du sprite, fluide : le badge suit la largeur de sa colonne de grille.
+   C'est pour ça que la position est en % (cf. badges.js) — un décalage en
+   pixels aurait obligé à figer une taille ici. `aspect-ratio` donne au <span>
+   la hauteur qu'une <img> tirait de son fichier. */
 .badge__hex {
-  width: 100%;
-  height: auto;
   display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  background-image: url('../assets/badges/badges-sprite.png');
+  background-repeat: no-repeat;
+  background-size: 600% 100%;
   filter: drop-shadow(0 4px 7px rgba(43, 45, 90, 0.24));
 }
 /* Cadenas en pastille, posé sur le coin du badge verrouillé. */
@@ -261,19 +267,16 @@ onMounted(load)
   filter: grayscale(1) drop-shadow(0 3px 6px rgba(43, 45, 90, 0.16));
   opacity: 0.75;
 }
-.badge.locked .badge__label,
 .badge.locked .badge__desc {
   opacity: 0.7;
 }
-.badge__label {
-  font-weight: 900;
-  font-size: 0.9rem;
-}
+/* La description remonte : elle est seule sous le badge depuis que le libellé
+   vit dans le ruban du visuel. */
 .badge__desc {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--ink-soft);
   font-weight: 600;
-  margin-top: 3px;
+  margin-top: 8px;
   line-height: 1.3;
 }
 

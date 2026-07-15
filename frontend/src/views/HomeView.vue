@@ -5,6 +5,7 @@ import { api } from '../api/client.js'
 import { useAuthStore } from '../stores/auth.js'
 import { useUiStore } from '../stores/ui.js'
 import { Target, Trophy, Award } from 'lucide-vue-next'
+import { badgePos } from '../badges.js'
 import Avatar from '../components/Avatar.vue'
 import GameStage from '../components/GameStage.vue'
 import AuthPanel from '../components/AuthPanel.vue'
@@ -114,11 +115,6 @@ function fitCenter() {
 }
 
 const badges = ref([])
-
-// Les fichiers sont nommés d'après les clés du serveur (debutant, rapide,
-// stratege, combo, expert, mystere) : pas de table de correspondance à tenir.
-const BADGE_IMGS = import.meta.glob('../assets/badges/*.png', { eager: true, import: 'default' })
-const badgeImg = (key) => BADGE_IMGS[`../assets/badges/${key}.png`]
 
 // 5 badges max sur le hub ; la liste complète est sur /recompenses.
 const topBadges = computed(() => badges.value.slice(0, 5))
@@ -281,9 +277,11 @@ onUnmounted(() => ro?.disconnect())
       <div class="card">
         <div class="card__title"><img class="ico ico--img" :src="imgPalmier" alt="" aria-hidden="true" /> Badges</div>
         <div class="badges-preview">
+          <!-- Plus de libellé sous le badge : il est peint dans le ruban du
+               visuel. L'aria-label le porte pour les lecteurs d'écran, à qui
+               une image ne dit rien. -->
           <div v-for="b in topBadges" :key="b.key" class="bdg" :class="{ 'bdg--locked': !b.unlocked }" :title="b.desc">
-            <img class="bdg__hex" :src="badgeImg(b.key)" :alt="b.label" />
-            <span class="bdg__lbl">{{ b.label }}</span>
+            <span class="bdg__hex" role="img" :aria-label="b.label" :style="{ backgroundPosition: badgePos(b.key) }"></span>
           </div>
           <p v-if="!topBadges.length" class="muted center" style="padding: 8px 0; margin: 0; font-size: 0.93rem">
             Connectez-vous pour débloquer vos badges !
@@ -563,32 +561,21 @@ onUnmounted(() => ro?.disconnect())
   min-width: 0;
   flex: 1;
 }
+/* Case du sprite. `aspect-ratio` remplace le `height: auto` d'une <img> : un
+   <span> vide n'a pas de hauteur intrinsèque, sans lui il serait plat.
+   background-size 600% = six cases ; la position vient de badgePos(). */
 .bdg__hex {
   width: 100%;
   max-width: 54px;
-  height: auto;
-  object-fit: contain;
+  aspect-ratio: 1;
+  background-image: url('../assets/badges/badges-sprite.png');
+  background-repeat: no-repeat;
+  background-size: 600% 100%;
   filter: drop-shadow(0 3px 5px rgba(43, 45, 90, 0.22));
-}
-.bdg__lbl {
-  font-size: 0.6rem;
-  font-weight: 900;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-  text-align: center;
-  line-height: 1.15;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .bdg--locked .bdg__hex {
   filter: grayscale(1) drop-shadow(0 2px 4px rgba(43, 45, 90, 0.14));
   opacity: 0.7;
-}
-.bdg--locked .bdg__lbl {
-  opacity: 0.65;
 }
 
 @media (max-width: 1080px) {
