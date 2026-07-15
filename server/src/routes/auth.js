@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import bcrypt from 'bcryptjs'
 import { User } from '../models/User.js'
+import { isAvatarKey, avatarForId } from '../avatars.js'
 import { signToken, requireAuth } from '../middleware/auth.js'
 
 const router = Router()
@@ -55,7 +56,13 @@ router.post('/register', async (req, res) => {
     const pseudoPris = await User.findOne({ pseudo }).collation(PSEUDO_COLLATION)
     if (pseudoPris) return res.status(409).json({ error: 'Ce pseudo est déjà pris.' })
 
-    const user = new User({ pseudo, email, societe, telephone, avatar: avatar || '😎' })
+    // L'avatar n'était pas validé : n'importe quelle chaîne passait et finissait
+    // affichée telle quelle dans le classement (Vue échappe, donc pas de XSS,
+    // mais un client bricolé pouvait y mettre ce qu'il voulait). On n'accepte
+    // plus qu'une clé connue, et on en attribue une plutôt que de rejeter : ce
+    // n'est pas un champ assez important pour bloquer une inscription.
+    const user = new User({ pseudo, email, societe, telephone })
+    user.avatar = isAvatarKey(avatar) ? avatar : avatarForId(user._id)
     await user.setPassword(password)
     await user.save()
 

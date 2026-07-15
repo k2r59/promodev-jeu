@@ -7,6 +7,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { LogOut, Gem, X } from 'lucide-vue-next'
+import Avatar from './Avatar.vue'
 import { useAuthStore } from '../stores/auth.js'
 
 const auth = useAuthStore()
@@ -43,7 +44,7 @@ function logout() {
       :aria-expanded="open"
       @click="open = true"
     >
-      <span class="ps__avatar">{{ auth.user.avatar || '😎' }}</span>
+      <span class="ps__avatar"><Avatar :value="auth.user.avatar" /></span>
       <span class="ps__lvl">{{ auth.user.level }}</span>
     </button>
 
@@ -58,7 +59,7 @@ function logout() {
           </button>
 
           <div class="ps__head">
-            <span class="ps__avatar ps__avatar--lg">{{ auth.user.avatar || '😎' }}</span>
+            <span class="ps__avatar ps__avatar--lg"><Avatar :value="auth.user.avatar" /></span>
             <div class="ps__id">
               <b class="ps__pseudo">{{ auth.user.pseudo }}</b>
               <span class="ps__soc" v-if="auth.user.societe">{{ auth.user.societe }}</span>

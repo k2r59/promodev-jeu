@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { RouterView, RouterLink, useRouter, useRoute } from 'vue-router'
 import { LogOut, UserRound, Gem } from 'lucide-vue-next'
+import Avatar from './components/Avatar.vue'
 import { useAuthStore } from './stores/auth.js'
 import { useUiStore } from './stores/ui.js'
 import FeaturesBar from './components/FeaturesBar.vue'
@@ -91,7 +92,7 @@ function logout() {
                  fiche, elle, tient dans un avatar et rend tout au tap. -->
             <PlayerSheet class="topbar__player" />
             <div class="userchip">
-              <div class="userchip__avatar">{{ auth.user.avatar || '😎' }}</div>
+              <div class="userchip__avatar"><Avatar :value="auth.user.avatar" /></div>
               <div class="userchip__info">
                 <div class="userchip__name">{{ auth.user.pseudo }}</div>
                 <div class="userchip__level">Niveau {{ auth.user.level }}</div>

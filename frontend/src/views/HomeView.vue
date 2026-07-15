@@ -5,6 +5,7 @@ import { api } from '../api/client.js'
 import { useAuthStore } from '../stores/auth.js'
 import { useUiStore } from '../stores/ui.js'
 import { Target, Trophy, Award } from 'lucide-vue-next'
+import Avatar from '../components/Avatar.vue'
 import GameStage from '../components/GameStage.vue'
 import AuthPanel from '../components/AuthPanel.vue'
 import imgPrize from '../assets/blocks/prize.png'
@@ -267,7 +268,7 @@ onUnmounted(() => ro?.disconnect())
             :class="{ 'lb-row--me': isMe(row) }"
           >
             <span class="lb-rank" :data-rank="row.rank">{{ row.rank }}</span>
-            <span class="lb-avatar">{{ row.avatar }}</span>
+            <span class="lb-avatar"><Avatar :value="row.avatar" /></span>
             <span class="lb-name">{{ row.pseudo }}<em v-if="isMe(row)"> (vous)</em></span>
             <span class="lb-score">{{ row.score.toLocaleString('fr-FR') }} ⭐</span>
           </div>
@@ -520,7 +521,15 @@ onUnmounted(() => ro?.disconnect())
   background: linear-gradient(180deg, #ffcfa0, #ff9d5c);
   color: #7a3b00;
 }
+/* Taille explicite depuis que l'avatar peut être une image : sans elle, l'image
+   se dimensionnerait sur un conteneur sans hauteur et disparaîtrait. Le
+   font-size sert encore aux avatars emoji des anciens comptes. */
 .lb-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
   font-size: 1.3rem;
 }
 .lb-name {

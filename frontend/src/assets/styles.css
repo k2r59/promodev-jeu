@@ -302,7 +302,28 @@ h4 {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
+    /* La barre par défaut (10px, gris ardoise) s'imposait sur le bord arrondi
+       de la carte. Ici on la veut discrète au point de disparaître : fine, bleu
+       pastel translucide, piste invisible. `scrollbar-color` couvre Firefox,
+       les ::-webkit-* couvrent Chrome/Safari — il faut les deux, aucun des deux
+       n'est universel. Le padding droit tient le texte à distance de la barre,
+       pour qu'elle vive à l'intérieur du bloc sans mordre le contenu. */
     scrollbar-width: thin;
+    scrollbar-color: rgba(57, 182, 255, 0.35) transparent;
+    padding-right: 12px;
+  }
+  .page__card::-webkit-scrollbar {
+    width: 6px;
+  }
+  .page__card::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .page__card::-webkit-scrollbar-thumb {
+    background: rgba(57, 182, 255, 0.35);
+    border-radius: 999px;
+  }
+  .page__card::-webkit-scrollbar-thumb:hover {
+    background: rgba(57, 182, 255, 0.55);
   }
 }
 

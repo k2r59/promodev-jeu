@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
 import { Hourglass } from 'lucide-vue-next'
+import Avatar from '../components/Avatar.vue'
 import { api } from '../api/client.js'
 import { useAuthStore } from '../stores/auth.js'
 
@@ -76,7 +77,7 @@ onMounted(load)
             <template v-if="row.rank <= 3">{{ ['🥇', '🥈', '🥉'][row.rank - 1] }}</template>
             <template v-else>{{ row.rank }}</template>
           </span>
-          <span class="row__avatar">{{ row.avatar }}</span>
+          <span class="row__avatar"><Avatar :value="row.avatar" /></span>
           <span class="row__name">
             {{ row.pseudo }}
             <em v-if="String(row.userId) === String(auth.user?.id)">(vous)</em>
@@ -89,7 +90,7 @@ onMounted(load)
 
       <div v-if="me && !board.some((b) => String(b.userId) === String(auth.user?.id))" class="me-banner">
         <span class="row__rank">{{ me.rank }}</span>
-        <span class="row__avatar">{{ me.avatar }}</span>
+        <span class="row__avatar"><Avatar :value="me.avatar" /></span>
         <span class="row__name">{{ me.pseudo }} <em>(vous)</em></span>
         <span class="row__score">{{ me.score.toLocaleString('fr-FR') }} ⭐</span>
       </div>
@@ -168,7 +169,14 @@ onMounted(load)
   font-size: 1rem;
   flex-shrink: 0;
 }
+/* Dimensionné depuis que l'avatar peut être une image (cf. lb-avatar du hub).
+   Le font-size reste le repli des avatars emoji d'avant. */
 .row__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
   font-size: 1.5rem;
 }
 .row__name {

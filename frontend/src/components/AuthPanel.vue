@@ -3,6 +3,9 @@
 // dans la colonne centrale du hub. Occupe la même hauteur, sans scroll de page.
 import { ref, reactive, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { ShieldCheck } from 'lucide-vue-next'
+import { AVATARS, DEFAULT_AVATAR } from '../avatars.js'
+import Avatar from './Avatar.vue'
 import { useAuthStore } from '../stores/auth.js'
 
 const auth = useAuthStore()
@@ -19,10 +22,9 @@ watch(
 const loading = ref(false)
 const error = ref('')
 
-const AVATARS = ['😎', '🏄', '🦩', '🐢', '🐬', '🦀', '🌴', '🍹', '⛱️', '🐙']
-const form = reactive({ pseudo: '', societe: '', telephone: '', email: '', password: '', avatar: '😎' })
+const form = reactive({ pseudo: '', societe: '', telephone: '', email: '', password: '', avatar: DEFAULT_AVATAR })
 
-// Choix de l'avatar en popover : la grille de 10 mangeait la hauteur du panneau.
+// Choix de l'avatar en popover : la grille mangeait la hauteur du panneau.
 const avatarOpen = ref(false)
 const avatarWrap = ref(null)
 
@@ -115,20 +117,23 @@ async function submit() {
                 aria-labelledby="ap-avatar-lbl"
                 @click="avatarOpen = !avatarOpen"
               >
-                <span class="avatarpick__cur">{{ form.avatar }}</span>
+                <span class="avatarpick__cur"><Avatar :value="form.avatar" /></span>
                 <span class="avatarpick__caret" aria-hidden="true">▾</span>
               </button>
               <div v-if="avatarOpen" class="avatarpick__pop" role="menu">
                 <button
-                  v-for="a in AVATARS"
-                  :key="a"
+                  v-for="(a, i) in AVATARS"
+                  :key="a.key"
                   type="button"
                   class="avatar-opt"
-                  :class="{ active: form.avatar === a }"
+                  :class="{ active: form.avatar === a.key }"
                   role="menuitem"
-                  @click="pickAvatar(a)"
+                  :aria-label="`Avatar ${i + 1}`"
+                  @click="pickAvatar(a.key)"
                 >
-                  {{ a }}
+                  <!-- 40 images d'un coup, soit ~1 Mo : `lazy` laisse le
+                       navigateur ne charger que ce qui entre dans le popover. -->
+                  <img class="avatar-opt__img" :src="a.img" alt="" loading="lazy" />
                 </button>
               </div>
             </div>
@@ -174,6 +179,18 @@ async function submit() {
           {{ loading ? 'Un instant…' : mode === 'register' ? '🚀 Créer mon compte' : '▶ Se connecter' }}
         </button>
       </form>
+
+      <!-- La société est obligatoire (c'est la qualification du prospect) mais
+           c'est aussi la donnée qu'on hésite le plus à donner. Dire tout de
+           suite où elle n'ira pas lève le frein. Formulation vérifiée contre le
+           code, pas promise à la légère : l'agrégation du classement ne remonte
+           que `pseudo` et `avatar` (routes/leaderboard.js), et la société n'est
+           affichée qu'au joueur lui-même, dans sa propre fiche (PlayerSheet).
+           D'où « aux autres joueurs » et non « jamais » tout court. -->
+      <p v-if="mode === 'register'" class="apanel__privacy">
+        <ShieldCheck :size="15" class="apanel__privacy-ico" aria-hidden="true" />
+        <span>Votre raison sociale n'est jamais affichée aux autres joueurs : dans le classement, seul votre pseudo apparaît.</span>
+      </p>
 
       <p class="apanel__foot muted">
         {{ mode === 'register' ? 'Déjà un compte ?' : 'Pas encore de compte ?' }}
@@ -283,12 +300,15 @@ async function submit() {
   position: relative;
   flex-shrink: 0;
 }
+/* 48px = la hauteur d'un .input (13px de padding x2 + le texte + 2px de bordure
+   x2). Le bouton est sur la même ligne que le champ Pseudo : toute autre valeur
+   se voit comme un décrochage. */
 .avatarpick__btn {
   display: flex;
   align-items: center;
-  gap: 4px;
-  height: 36px;
-  padding: 0 8px 0 10px;
+  gap: 5px;
+  height: 48px;
+  padding: 0 8px 0 7px;
   border-radius: var(--radius-sm);
   border: 1.5px solid #e3e8f2;
   background: #fff;
@@ -299,7 +319,15 @@ async function submit() {
   border-color: var(--sky);
   box-shadow: 0 0 0 3px rgba(57, 182, 255, 0.18);
 }
+/* Ce span n'avait qu'un font-size : il portait du texte. Il porte maintenant une
+   image, qui se dimensionne sur son conteneur — sans taille explicite elle
+   s'effondrerait à 0. Le font-size reste pour les anciens avatars emoji. */
 .avatarpick__cur {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  overflow: hidden;
+  flex-shrink: 0;
   font-size: 1.15rem;
   line-height: 1;
 }
@@ -314,20 +342,35 @@ async function submit() {
   z-index: 20;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 4px;
+  gap: 6px;
   padding: 8px;
   background: #fff;
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-lg);
   animation: pop-in 0.12s ease;
+  /* 40 avatars sur 5 colonnes = 8 rangées : ça dépasse le panneau, qui ne
+     défile pas (il occupe exactement la place du plateau). Le popover défile
+     donc lui-même. La hauteur est bornée en px et non en rangées : c'est ce
+     qu'on veut garantir, que le bouton reste visible au-dessus. */
+  max-height: 288px;
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 .avatar-opt {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  overflow: hidden;
   background: #f3f6fc;
   font-size: 1.05rem;
   transition: transform 0.1s;
+  padding: 0;
+}
+.avatar-opt__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 .avatar-opt:hover {
   transform: scale(1.08);
@@ -335,6 +378,27 @@ async function submit() {
 .avatar-opt.active {
   background: #fff;
   box-shadow: 0 0 0 2px var(--sky);
+}
+/* Rassurance, pas avertissement : un vert discret plutôt qu'un bandeau d'alerte.
+   `align-items: start` car le texte passe sur deux lignes et l'icône doit rester
+   en tête, pas se centrer verticalement sur le bloc. */
+.apanel__privacy {
+  display: flex;
+  align-items: start;
+  gap: 7px;
+  margin: 12px 0 0;
+  padding: 9px 11px;
+  border-radius: var(--radius-sm);
+  background: rgba(46, 204, 113, 0.09);
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.apanel__privacy-ico {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--leaf);
 }
 .apanel__foot {
   text-align: center;
