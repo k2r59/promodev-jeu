@@ -4,7 +4,7 @@ Un jeu **Match-3** estival, mobile-first, pensé pour attirer des prospects et l
 Parties de **2 minutes**, combos spectaculaires, boosters, défis quotidiens, classements et un
 grand prix : **1 000 € de remise** sur une future opération Promodev.
 
-> Univers 100 % été : soleil 🌞, ballon de plage 🏖️, glace 🍦, pastèque 🍉, coquillage 🐚, étoile ⭐, noix de coco 🥥, palmier 🌴.
+> Univers 100 % été : soleil 🌞, ballon de plage 🏖️, glace 🍦, pastèque 🍉, coquillage 🐚, étoile ⭐, noix de coco 🥥, palmier 🌴, tongs 🩴, lunettes de soleil 🕶️.
 
 ## 🧱 Stack
 
