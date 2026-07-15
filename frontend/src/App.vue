@@ -45,11 +45,14 @@ const nav = [
   { to: '/aide', label: 'Aide', icon: icoAide }
 ]
 
+// 500 XP par niveau : doit rester d'accord avec recomputeLevel() côté serveur
+// (models/User.js), qui fait level = floor(xp / 500) + 1.
 const xpInLevel = computed(() => {
   if (!auth.user) return 0
   return auth.user.xp % 500
 })
 const xpPct = computed(() => Math.round((xpInLevel.value / 500) * 100))
+const xpToNext = computed(() => 500 - xpInLevel.value)
 
 function logout() {
   auth.logout()
@@ -95,8 +98,15 @@ function logout() {
               <div class="userchip__avatar"><Avatar :value="auth.user.avatar" /></div>
               <div class="userchip__info">
                 <div class="userchip__name">{{ auth.user.pseudo }}</div>
-                <div class="userchip__level">Niveau {{ auth.user.level }}</div>
-                <div class="xpbar"><div class="xpbar__fill" :style="{ width: xpPct + '%' }"></div></div>
+                <!-- Le niveau porte le reste à parcourir : la barre seule ne
+                     dit qu'une proportion, jamais un nombre. Le header n'a pas
+                     la place d'une ligne de plus, d'où la parenthèse. -->
+                <div class="userchip__level">
+                  Niveau {{ auth.user.level }} <span class="userchip__next">· plus que {{ xpToNext }} XP</span>
+                </div>
+                <div class="xpbar" :title="`${xpInLevel} / 500 XP — plus que ${xpToNext} avant le niveau ${auth.user.level + 1}`">
+                  <div class="xpbar__fill" :style="{ width: xpPct + '%' }"></div>
+                </div>
               </div>
               <button class="userchip__logout" title="Se déconnecter" aria-label="Se déconnecter" @click="logout">
                 <LogOut :size="15" aria-hidden="true" />

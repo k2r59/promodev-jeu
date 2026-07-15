@@ -14,9 +14,13 @@ const auth = useAuthStore()
 const router = useRouter()
 const open = ref(false)
 
+// Doit rester d'accord avec recomputeLevel() côté serveur (models/User.js) :
+// level = floor(xp / 500) + 1. Une valeur différente ici afficherait une
+// progression que le serveur ne reconnaîtrait pas.
 const XP_PER_LEVEL = 500
 const xpInLevel = computed(() => (auth.user ? auth.user.xp % XP_PER_LEVEL : 0))
 const xpPct = computed(() => Math.round((xpInLevel.value / XP_PER_LEVEL) * 100))
+const xpToNext = computed(() => XP_PER_LEVEL - xpInLevel.value)
 
 function onKeydown(e) {
   if (e.key === 'Escape') open.value = false
@@ -72,6 +76,9 @@ function logout() {
               <span>{{ xpInLevel }} / {{ XP_PER_LEVEL }} XP</span>
             </div>
             <div class="progress progress--sun"><div class="progress__bar" :style="{ width: xpPct + '%' }"></div></div>
+            <!-- « 120 / 500 » dit ce qu'on a ; ce que le joueur veut savoir,
+                 c'est ce qu'il lui reste. La soustraction est faite pour lui. -->
+            <div class="ps__xp-next">Plus que <b>{{ xpToNext }} XP</b> avant le niveau {{ auth.user.level + 1 }}</div>
           </div>
 
           <div class="ps__gems">
@@ -206,6 +213,16 @@ function logout() {
   font-weight: 800;
   color: var(--ink-soft);
   margin-bottom: 6px;
+}
+.ps__xp-next {
+  margin-top: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.ps__xp-next b {
+  color: var(--ink);
+  font-weight: 900;
 }
 .ps__gems {
   display: flex;
