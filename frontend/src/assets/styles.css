@@ -12,7 +12,7 @@
   --ink: #2a2d5a;
   --ink-soft: #6b6f9c;
   --white: #ffffff;
-  --card: rgba(255, 255, 255, 0.92);
+  --card: rgba(255, 255, 255, 0.85);
   --shadow: 0 10px 30px rgba(43, 45, 90, 0.12);
   --shadow-lg: 0 18px 44px rgba(43, 45, 90, 0.22);
   --radius: 22px;
@@ -180,6 +180,13 @@ h4 {
 }
 .btn--sea:active {
   box-shadow: 0 2px 0 #0c8a9c, var(--shadow);
+}
+.btn--leaf {
+  background: linear-gradient(180deg, #5ada8d, var(--leaf));
+  box-shadow: 0 6px 0 #1e9b52, var(--shadow);
+}
+.btn--leaf:active {
+  box-shadow: 0 2px 0 #1e9b52, var(--shadow);
 }
 .btn--ghost {
   background: rgba(255, 255, 255, 0.7);

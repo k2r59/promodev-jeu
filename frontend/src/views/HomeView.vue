@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { api } from '../api/client.js'
 import { useAuthStore } from '../stores/auth.js'
 import { useUiStore } from '../stores/ui.js'
+import { Target, Trophy, Award } from 'lucide-vue-next'
 import GameStage from '../components/GameStage.vue'
 import AuthPanel from '../components/AuthPanel.vue'
 import imgPrize from '../assets/blocks/prize.png'
@@ -222,9 +223,9 @@ onUnmounted(() => ro?.disconnect())
             </div>
             <span class="chal__reward">{{ c.progress }}/{{ c.goal }} <b>💎{{ c.reward }}</b></span>
           </div>
-          <RouterLink to="/defis" class="btn btn--block ch-cta">Voir tous les défis</RouterLink>
+          <RouterLink to="/defis" class="btn btn--block ch-cta"><Target :size="15" aria-hidden="true" /> Voir tous les défis</RouterLink>
         </template>
-        <p v-else class="muted center" style="padding: 8px 0">
+        <p v-else class="muted center" style="padding: 8px 0; font-size: 0.93rem">
           Connectez-vous pour relever les défis quotidiens et gagner des gemmes !
         </p>
       </div>
@@ -271,7 +272,7 @@ onUnmounted(() => ro?.disconnect())
             <span class="lb-score">{{ row.score.toLocaleString('fr-FR') }} ⭐</span>
           </div>
           <p v-if="!board.length" class="muted center">Soyez le premier à marquer des points !</p>
-          <RouterLink to="/classement" class="btn btn--block lb-cta">Voir le classement complet</RouterLink>
+          <RouterLink to="/classement" class="btn btn--block lb-cta"><Trophy :size="15" aria-hidden="true" /> Voir le classement complet</RouterLink>
         </template>
       </div>
 
@@ -283,11 +284,11 @@ onUnmounted(() => ro?.disconnect())
             <img class="bdg__hex" :src="badgeImg(b.key)" :alt="b.label" />
             <span class="bdg__lbl">{{ b.label }}</span>
           </div>
-          <p v-if="!topBadges.length" class="muted center" style="padding: 8px 0; margin: 0">
+          <p v-if="!topBadges.length" class="muted center" style="padding: 8px 0; margin: 0; font-size: 0.93rem">
             Connectez-vous pour débloquer vos badges !
           </p>
         </div>
-        <RouterLink to="/recompenses" class="btn btn--block lb-cta">Voir tous les badges</RouterLink>
+        <RouterLink to="/recompenses" class="btn btn--block lb-cta"><Award :size="15" aria-hidden="true" /> Voir tous les badges</RouterLink>
       </div>
     </aside>
 
@@ -362,7 +363,11 @@ onUnmounted(() => ro?.disconnect())
   width: 100%;
   height: auto;
   border-radius: var(--radius);
-  filter: drop-shadow(0 8px 18px rgba(43, 45, 90, 0.22));
+  /* Deux ombres, pas une : le ciel du visuel est du même bleu que le fond de
+     page, donc l'ombre portée seule ne détache pas le bord haut. Le premier
+     drop-shadow est un liseré de contact (flou 1px) qui redessine la découpe ;
+     le second donne la profondeur. */
+  filter: drop-shadow(0 0 1px rgba(43, 45, 90, 0.3)) drop-shadow(0 10px 22px rgba(43, 45, 90, 0.28));
 }
 /* Calée sur le bouton « EN SAVOIR PLUS » dessiné dans le visuel.
    `background: none` : c'est tantôt un lien, tantôt un <button>, et un bouton
@@ -432,7 +437,7 @@ onUnmounted(() => ro?.disconnect())
 
 
 
-/* Onglets de période : piste claire, onglet actif en pastille rose. */
+/* Onglets de période : piste claire, onglet actif en pastille bleue. */
 .lb-tabs {
   display: flex;
   gap: 2px;
@@ -455,9 +460,9 @@ onUnmounted(() => ro?.disconnect())
   color: var(--ink);
 }
 .lb-tab.is-active {
-  background: linear-gradient(180deg, var(--coral-2), var(--coral));
+  background: linear-gradient(180deg, var(--sky-2), var(--sky));
   color: #fff;
-  box-shadow: 0 2px 6px rgba(255, 94, 120, 0.4);
+  box-shadow: 0 2px 6px rgba(57, 182, 255, 0.4);
 }
 
 /* CTA des cartes du hub : pastille pleine largeur, en capitales.

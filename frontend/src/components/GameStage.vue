@@ -178,7 +178,7 @@ onUnmounted(() => clearInterval(timerId))
             2 minutes chrono pour aligner un max de tuiles estivales et exploser votre score !
             <template v-if="!auth.isAuth"><br />Créez votre compte en 30 secondes pour lancer votre première partie.</template>
           </p>
-          <button class="btn btn--lg" @click="startGame">▶ C'est parti !</button>
+          <button class="btn btn--lg btn--leaf" @click="startGame">▶ C'est parti !</button>
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { RouterView, RouterLink, useRouter, useRoute } from 'vue-router'
-import { LogOut, Gem } from 'lucide-vue-next'
+import { LogOut, UserRound, Gem } from 'lucide-vue-next'
 import { useAuthStore } from './stores/auth.js'
 import { useUiStore } from './stores/ui.js'
 import FeaturesBar from './components/FeaturesBar.vue'
@@ -110,7 +110,7 @@ function logout() {
             <!-- Le formulaire est déjà au centre : ce bouton l'ouvre sur l'onglet
                  Connexion plutôt que de naviguer vers une page qui n'existe plus. -->
             <RouterLink :to="{ path: '/', query: { mode: 'connexion' } }" class="btn btn--sun topbar__login">
-              Se connecter
+              <UserRound :size="15" aria-hidden="true" /> Se connecter
             </RouterLink>
           </template>
         </div>
@@ -488,10 +488,23 @@ main.container {
   .bottomnav {
     display: none;
   }
-  /* Ici c'est le `margin-left: auto` de .mainnav qui pousse nav et profil à
-     droite ; `space-between` en plus les écarterait les uns des autres. Il n'a
-     de sens que sur mobile, où la nav est masquée et ne pousse donc plus rien —
-     tout retombait à gauche. */
+  /* Nav centrée sur la barre, pas seulement dans l'espace qui reste : logo et
+     bloc de droite prennent `flex: 1 1 0`, donc ils se partagent le vide à
+     parts égales de chaque côté et la nav tombe au milieu exact — quelles que
+     soient leurs largeurs (le logo est plus large que le profil). D'où
+     l'annulation du `margin-left: auto` de .mainnav, qui la collait à droite.
+     Le `min-width: auto` par défaut des éléments flex protège le logo : il ne
+     sera jamais écrasé sous son contenu, la nav se décentrera avant. */
+  .brand,
+  .topbar__right {
+    flex: 1 1 0;
+  }
+  .topbar__right {
+    justify-content: flex-end;
+  }
+  .mainnav {
+    margin-left: 0;
+  }
   /* La nav du bas disparaît ici : plus rien à lui réserver. */
   .app-shell {
     padding-bottom: 0;

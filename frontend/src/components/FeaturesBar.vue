@@ -40,7 +40,11 @@ const features = [
   z-index: 40;
   margin-top: auto;
   flex-shrink: 0;
-  background: linear-gradient(180deg, #fbeed0, #f2dcac);
+  /* Même sable qu'avant, juste un voile de transparence — assorti aux cartes.
+     Le `backdrop-filter` va avec : sans lui, le contenu qui défile dessous
+     resterait lisible par transparence et brouillerait les libellés. */
+  background: linear-gradient(180deg, rgba(251, 238, 208, 0.88), rgba(242, 220, 172, 0.88));
+  backdrop-filter: blur(6px);
   border-top: 1px solid rgba(190, 150, 90, 0.35);
   box-shadow: 0 -6px 22px rgba(43, 45, 90, 0.13);
 }
