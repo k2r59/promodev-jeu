@@ -277,11 +277,11 @@ onUnmounted(() => ro?.disconnect())
       <div class="card">
         <div class="card__title"><img class="ico ico--img" :src="imgPalmier" alt="" aria-hidden="true" /> Badges</div>
         <div class="badges-preview">
-          <!-- Plus de libellé sous le badge : il est peint dans le ruban du
-               visuel. L'aria-label le porte pour les lecteurs d'écran, à qui
-               une image ne dit rien. -->
           <div v-for="b in topBadges" :key="b.key" class="bdg" :class="{ 'bdg--locked': !b.unlocked }" :title="b.desc">
-            <span class="bdg__hex" role="img" :aria-label="b.label" :style="{ backgroundPosition: badgePos(b.key) }"></span>
+            <!-- aria-hidden : le libellé juste dessous dit déjà le nom, l'annoncer
+                 deux fois n'apporte rien à un lecteur d'écran. -->
+            <span class="bdg__hex" aria-hidden="true" :style="{ backgroundPosition: badgePos(b.key) }"></span>
+            <span class="bdg__lbl">{{ b.label }}</span>
           </div>
           <p v-if="!topBadges.length" class="muted center" style="padding: 8px 0; margin: 0; font-size: 0.93rem">
             Connectez-vous pour débloquer vos badges !
@@ -573,9 +573,25 @@ onUnmounted(() => ro?.disconnect())
   background-size: 600% 100%;
   filter: drop-shadow(0 3px 5px rgba(43, 45, 90, 0.22));
 }
+.bdg__lbl {
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  text-align: center;
+  line-height: 1.15;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .bdg--locked .bdg__hex {
   filter: grayscale(1) drop-shadow(0 2px 4px rgba(43, 45, 90, 0.14));
   opacity: 0.7;
+}
+.bdg--locked .bdg__lbl {
+  opacity: 0.65;
 }
 
 @media (max-width: 1080px) {

@@ -5,11 +5,9 @@
 // voisin. Il suit l'ordre de BADGES dans server/src/gameData.js, qui reste la
 // source de vérité des libellés et des conditions.
 //
-// Les libellés sont PEINTS dans les visuels (rubans). C'est pour ça que les
-// vues n'affichent plus de texte sous les badges : il ferait doublon. Corollaire
-// assumé : les fautes des rubans (« Combo Matter », « Stratege ») ne sont pas
-// corrigeables sans régénérer les images, et le libellé n'est pas traduisible.
-// Il ne survit que dans l'aria-label, pour les lecteurs d'écran.
+// Les visuels ne portent AUCUN texte : ce sont des hexagones illustrés, et le
+// libellé reste affiché par les vues, depuis le serveur. C'est ce qui le garde
+// juste (accents compris) et corrigeable sans toucher aux images.
 //
 // L'image elle-même n'est pas importée ici : les vues la pointent en `url()`
 // depuis leur CSS, que Vite résout et hache comme n'importe quel asset.

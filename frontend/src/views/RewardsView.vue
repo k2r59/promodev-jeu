@@ -79,12 +79,10 @@ onMounted(load)
       <div v-else class="badge-grid">
         <div v-for="b in badges" :key="b.key" class="badge" :class="{ locked: !b.unlocked }">
           <div class="badge__visual">
-            <!-- Le libellé est peint dans le ruban : l'afficher sous le badge
-                 le dirait deux fois. La description, elle, reste — c'est elle
-                 qui apprend au joueur comment le décrocher. -->
-            <span class="badge__hex" role="img" :aria-label="b.label" :style="{ backgroundPosition: badgePos(b.key) }"></span>
+            <span class="badge__hex" aria-hidden="true" :style="{ backgroundPosition: badgePos(b.key) }"></span>
             <span v-if="!b.unlocked" class="badge__lock" aria-label="Verrouillé">🔒</span>
           </div>
+          <div class="badge__label">{{ b.label }}</div>
           <div class="badge__desc">{{ b.desc }}</div>
         </div>
       </div>
@@ -267,16 +265,19 @@ onMounted(load)
   filter: grayscale(1) drop-shadow(0 3px 6px rgba(43, 45, 90, 0.16));
   opacity: 0.75;
 }
+.badge.locked .badge__label,
 .badge.locked .badge__desc {
   opacity: 0.7;
 }
-/* La description remonte : elle est seule sous le badge depuis que le libellé
-   vit dans le ruban du visuel. */
+.badge__label {
+  font-weight: 900;
+  font-size: 0.9rem;
+}
 .badge__desc {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: var(--ink-soft);
   font-weight: 600;
-  margin-top: 8px;
+  margin-top: 3px;
   line-height: 1.3;
 }
 
