@@ -25,6 +25,7 @@ const BOOSTER_SFX = { bombe: urlBombe, eclair: urlEclair, vague: urlVague }
 const SAMPLES = [urlErreur, urlJouer, urlBombe, urlEclair, urlVague, urlFin, urlClic, urlCombo]
 
 let ctx = null
+let limiter = null
 // Volume maître des effets, 0 → 1. Piloté par le store audio.
 let volume = 0
 
@@ -35,6 +36,32 @@ function ac() {
   }
   if (ctx && ctx.state === 'suspended') ctx.resume()
   return ctx
+}
+
+// --- Bus maître ------------------------------------------------------------
+// Tout sort par ici : plus rien ne se branche sur c.destination directement.
+// Raison : les sources s'ADDITIONNENT, et Web Audio écrête sec au-delà de 1.
+// combo.mp3 est mastérisé à 0 dB (pic 1.0) et part dans le même tick que
+// sfx.match() — sans ce garde-fou, la somme dépassait 1 à plein volume et
+// distordait pile à la naissance du combo, le moment le plus grisant du jeu.
+// Le seuil est posé au-dessus des sons isolés : un échantillon seul passe
+// intact, seules les superpositions sont rattrapées. C'est aussi ce qui rend
+// sûr l'ajout d'un futur échantillon fort, sans réaccorder tous les gains.
+function bus() {
+  const c = ac()
+  if (!c) return null
+  if (!limiter) {
+    limiter = c.createDynamicsCompressor()
+    limiter.threshold.value = -1
+    // Coude franc et ratio haut : on veut un limiteur, pas un compresseur qui
+    // respirerait et écraserait la dynamique des cascades.
+    limiter.knee.value = 0
+    limiter.ratio.value = 20
+    limiter.attack.value = 0.003
+    limiter.release.value = 0.25
+    limiter.connect(c.destination)
+  }
+  return limiter
 }
 
 // --- Échantillons ----------------------------------------------------------
@@ -68,7 +95,7 @@ function sample(url, gain = 1) {
     const g = c.createGain()
     src.buffer = buf
     g.gain.value = gain * volume
-    src.connect(g).connect(c.destination)
+    src.connect(g).connect(bus())
     src.start()
   })
 }
@@ -95,20 +122,29 @@ function tone({ freq = 440, dur = 0.12, type = 'sine', gain = 0.15, slide = 0 })
   // exponentialRampToValueAtTime n'accepte pas 0 : on part d'un gain non nul.
   g.gain.setValueAtTime(Math.max(0.0001, gain * volume), c.currentTime)
   g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur)
-  osc.connect(g).connect(c.destination)
+  osc.connect(g).connect(bus())
   osc.start()
   osc.stop(c.currentTime + dur)
 }
 
+// ÉQUILIBRE DU MIXAGE — à lire avant de toucher un gain.
+// Les échantillons sont des prises normalisées : à gain 0.9 ils sortent quasi à
+// 0 dB. Un oscillateur à 0.14 sort ~19 dB plus bas — inaudible à côté, alors que
+// ces valeurs étaient justes quand TOUT était synthétisé (0.08 à 0.15).
+// Les gains ci-dessous sont donc relevés pour tenir la comparaison. Ajouter un
+// échantillon fort sans y regarder ferait à nouveau disparaître les synthés.
+// Ces valeurs peuvent se superposer et dépasser 1 en somme : c'est bus() qui
+// tient le plafond, ne pas les relever davantage en comptant sur lui pour
+// rattraper — un limiteur qui travaille en permanence s'entend.
 export const sfx = {
   // Synthétisé : joué à chaque échange, une prise s'entendrait répétitive.
-  swap: () => tone({ freq: 320, dur: 0.08, type: 'triangle', gain: 0.1, slide: 120 }),
+  swap: () => tone({ freq: 320, dur: 0.08, type: 'triangle', gain: 0.3, slide: 120 }),
   invalid: () => sample(urlErreur, 0.9),
   clic: () => sample(urlClic, 0.7),
   jouer: () => sample(urlJouer, 0.9),
   // Le pitch monte avec le combo : c'est ce qui rend la cascade grisante, et
   // aucun échantillon ne saurait le faire.
-  match: (combo = 1) => tone({ freq: 380 + combo * 70, dur: 0.14, type: 'sine', gain: 0.14, slide: 200 }),
+  match: (combo = 1) => tone({ freq: 380 + combo * 70, dur: 0.14, type: 'sine', gain: 0.45, slide: 200 }),
   // À déclencher UNE FOIS par cascade, quand le combo naît — pas à chaque
   // palier : l'échantillon dure 0,8s et les paliers s'enchaînent toutes les
   // ~500ms, trois de suite donneraient de la bouillie.
@@ -118,14 +154,14 @@ export const sfx = {
   booster: (key) => {
     const url = BOOSTER_SFX[key]
     if (url) return sample(url, 0.85)
-    tone({ freq: 220, dur: 0.18, type: 'square', gain: 0.12, slide: 400 })
-    tone({ freq: 660, dur: 0.22, type: 'triangle', gain: 0.08, slide: 300 })
+    tone({ freq: 220, dur: 0.18, type: 'square', gain: 0.3, slide: 400 })
+    tone({ freq: 660, dur: 0.22, type: 'triangle', gain: 0.2, slide: 300 })
   },
   reward: () => {
     ;[523, 659, 784, 1046].forEach((f, i) =>
-      setTimeout(() => tone({ freq: f, dur: 0.16, type: 'triangle', gain: 0.12 }), i * 90)
+      setTimeout(() => tone({ freq: f, dur: 0.16, type: 'triangle', gain: 0.34 }), i * 90)
     )
   },
-  countdown: () => tone({ freq: 880, dur: 0.1, type: 'square', gain: 0.1 }),
+  countdown: () => tone({ freq: 880, dur: 0.1, type: 'square', gain: 0.28 }),
   gameover: () => sample(urlFin, 0.9)
 }
