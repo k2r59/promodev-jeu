@@ -19,5 +19,10 @@ const scoreSchema = new Schema(
 )
 
 scoreSchema.index({ createdAt: -1 })
+// Classements : les agrégations filtrent sur une fenêtre (createdAt >= début)
+// puis trient/comparent par score. Cet index composite sert les deux d'un coup —
+// le tri du top-N par période et le comptage « combien au-dessus de mon score »
+// du rang perso, sans balayer toute la collection.
+scoreSchema.index({ createdAt: -1, score: -1 })
 
 export const Score = mongoose.model('PromodevEteScore', scoreSchema)
