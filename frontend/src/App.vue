@@ -138,6 +138,17 @@ function logout() {
 
     <FeaturesBar v-if="!isGameScreen" />
 
+    <!-- Liens légaux, permanents : l'art. 15 du règlement impose qu'il reste
+         consultable pendant toute l'opération. Discrets, mais toujours là.
+         Masqués sur l'écran de jeu, cadré au pixel. -->
+    <footer v-if="!isGameScreen" class="legalbar">
+      <RouterLink to="/mentions-legales">Mentions légales</RouterLink>
+      <span aria-hidden="true">·</span>
+      <RouterLink to="/reglement">Règlement</RouterLink>
+      <span aria-hidden="true">·</span>
+      <RouterLink to="/confidentialite">Confidentialité</RouterLink>
+    </footer>
+
     <!-- Barre de navigation mobile -->
     <nav class="bottomnav">
       <RouterLink v-for="n in nav" :key="n.to" :to="n.to" class="bottomnav__link" active-class="is-active">
@@ -167,6 +178,26 @@ function logout() {
 </template>
 
 <style scoped>
+.legalbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 16px 4px;
+  font-size: 0.76rem;
+  color: var(--ink-soft);
+}
+.legalbar a {
+  color: var(--ink-soft);
+  font-weight: 600;
+  text-decoration: none;
+}
+.legalbar a:hover {
+  color: var(--sky);
+  text-decoration: underline;
+}
+
 .app-shell {
   display: flex;
   flex-direction: column;

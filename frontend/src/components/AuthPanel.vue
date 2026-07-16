@@ -43,7 +43,17 @@ watch(mode, () => {
   forgotSent.value = false
 })
 
-const form = reactive({ pseudo: '', societe: '', telephone: '', email: '', password: '', avatar: DEFAULT_AVATAR })
+const form = reactive({
+  pseudo: '',
+  societe: '',
+  telephone: '',
+  email: '',
+  password: '',
+  avatar: DEFAULT_AVATAR,
+  // Acceptation du règlement (art. 2). Le serveur la réexige : la case n'est
+  // qu'un rappel visuel, elle ne prouve rien à elle seule.
+  acceptRules: false
+})
 
 // Choix de l'avatar en popover : la grille mangeait la hauteur du panneau.
 const avatarOpen = ref(false)
@@ -91,7 +101,8 @@ async function submit() {
         password: form.password,
         avatar: form.avatar,
         societe: form.societe,
-        telephone: form.telephone
+        telephone: form.telephone,
+        acceptRules: form.acceptRules
       })
     } else {
       await auth.login({ email: form.email, password: form.password })
@@ -241,7 +252,35 @@ async function submit() {
              ponctuation ne ferait que bavarder. -->
         <p v-if="mode === 'register'" class="apanel__req">* champs obligatoires</p>
 
-        <button class="btn btn--lg btn--block" type="submit" :disabled="loading">
+        <!-- Information RGPD au point de collecte (art. 12). Les liens s'ouvrent
+             dans un nouvel onglet : sur le même, ils feraient perdre la saisie,
+             le formulaire vivant dans le hub et non sur une page à part. -->
+        <template v-if="mode === 'register'">
+          <p class="apanel__rgpd">
+            Les informations recueillies sont traitées par PromoDev afin de créer et gérer votre compte,
+            enregistrer vos parties et vos scores, établir le classement, prévenir les fraudes, réaliser le
+            tirage au sort et attribuer les lots. Les champs signalés par un astérisque sont obligatoires
+            pour participer. Pour en savoir plus sur l'utilisation de vos données et l'exercice de vos droits,
+            consultez notre
+            <RouterLink to="/confidentialite" target="_blank">politique de confidentialité</RouterLink>.
+          </p>
+
+          <label class="apanel__accept">
+            <input v-model="form.acceptRules" type="checkbox" class="apanel__accept-box" />
+            <span>
+              Je certifie être âgé(e) de 18 ans ou plus, remplir les conditions de participation et avoir lu
+              et accepté sans réserve le
+              <RouterLink to="/reglement" target="_blank">règlement du Jeu de l'Été PromoDev</RouterLink>.
+              <span class="req" aria-hidden="true">*</span>
+            </span>
+          </label>
+        </template>
+
+        <button
+          class="btn btn--lg btn--block"
+          type="submit"
+          :disabled="loading || (mode === 'register' && !form.acceptRules)"
+        >
           <span v-if="loading" class="spin" aria-hidden="true"></span>
           {{
             loading
@@ -390,6 +429,32 @@ async function submit() {
   font-size: 0.7rem;
   color: var(--ink-soft);
   font-weight: 600;
+}
+.apanel__rgpd {
+  margin: 0 0 10px;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+/* La case et son texte sur une ligne, l'un aligné à l'autre. La case ne rétrécit
+   pas quand le texte passe sur plusieurs lignes. */
+.apanel__accept {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 0 0 12px;
+  font-size: 0.76rem;
+  line-height: 1.4;
+  color: var(--ink);
+  cursor: pointer;
+}
+.apanel__accept-box {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  accent-color: var(--coral);
+  cursor: pointer;
 }
 .apanel__forgot {
   text-align: center;

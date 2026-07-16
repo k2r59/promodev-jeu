@@ -7,6 +7,8 @@ import ChallengesView from './views/ChallengesView.vue'
 import RewardsView from './views/RewardsView.vue'
 import HelpView from './views/HelpView.vue'
 import ResetPasswordView from './views/ResetPasswordView.vue'
+import MentionsLegalesView from './views/MentionsLegalesView.vue'
+import ReglementView from './views/ReglementView.vue'
 
 // Le jeu et le formulaire vivent désormais dans la colonne centrale de l'accueil :
 // ces deux URL n'ont plus d'écran propre mais restent valides (liens, favoris).
@@ -24,13 +26,21 @@ const routes = [
   // l'accueil sans un mot d'explication — la vue gère elle-même le jeton
   // manquant, c'est pourquoi elle est déclarée avant.
   { path: '/reinitialiser', name: 'reset-password', component: ResetPasswordView },
+  { path: '/mentions-legales', name: 'legal', component: MentionsLegalesView },
+  { path: '/reglement', name: 'rules', component: ReglementView },
+  // Le texte RGPD parle de « politique de confidentialité » : cette URL parlante
+  // mène à sa section dans les mentions légales, plutôt que de dupliquer la page.
+  { path: '/confidentialite', redirect: { name: 'legal', hash: '#confidentialite' } },
   { path: '/:pathMatch(.*)*', redirect: '/' }
 ]
 
 export const router = createRouter({
   history: createWebHistory(),
   routes,
-  scrollBehavior() {
+  scrollBehavior(to) {
+    // Une ancre (#confidentialite depuis le lien RGPD) : on va à la section, un
+    // léger décalage pour ne pas la coller sous la barre du site.
+    if (to.hash) return { el: to.hash, top: 80, behavior: 'smooth' }
     return { top: 0 }
   }
 })
