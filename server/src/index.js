@@ -20,9 +20,33 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
 app.set('trust proxy', 1)
 
-// En-têtes de sécurité. La CSP par défaut de helmet casserait le build Vite
-// (styles inline) : on la laisse de côté ici, le front est servi en statique.
-app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }))
+// En-têtes de sécurité, CSP comprise. Le point qui compte : script-src 'self'
+// SANS 'unsafe-inline' — le build Vite ne pose aucun script inline (vérifié),
+// donc une XSS injectée ne pourrait exécuter aucun script. C'est ce qui, avec
+// le JWT en localStorage, transformait une future XSS en vol de compte.
+// Les styles, eux, ont besoin de 'unsafe-inline' : Vue pose des style="" (les
+// :style bindings) — sans danger, ça n'exécute pas de code.
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", 'data:'], // avatars, favicon SVG en data:
+        fontSrc: ["'self'", 'data:'],
+        // Le front envoie ses erreurs à Sentry : sans ça, la CSP les bloquerait.
+        connectSrc: ["'self'", 'https://*.sentry.io', 'https://*.ingest.sentry.io', 'https://*.ingest.us.sentry.io'],
+        workerSrc: ["'self'", 'blob:'], // service worker de la PWA
+        manifestSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        baseUri: ["'self'"],
+        frameAncestors: ["'self'"] // anti-clickjacking
+      }
+    },
+    crossOriginEmbedderPolicy: false
+  })
+)
 app.use(express.json({ limit: '100kb' }))
 
 // CORS : en prod le front est servi par le même serveur (donc same-origin, pas

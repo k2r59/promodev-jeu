@@ -3,6 +3,7 @@ import mongoose from 'mongoose'
 import rateLimit from 'express-rate-limit'
 import * as Sentry from '@sentry/node'
 import { Score } from '../models/Score.js'
+import { optionalUid } from '../middleware/auth.js'
 import { config } from '../config.js'
 
 const router = Router()
@@ -128,12 +129,18 @@ router.get('/', leaderboardLimiter, async (req, res) => {
 
     const { board, total } = await getBoardCached(period)
 
-    // Rang du joueur : s'il est dans le top-200 déjà chargé, on prend son rang
-    // exact (départage des égalités inclus) sans requête de plus ; sinon on le
-    // calcule à part, léger.
+    // Rang du joueur : calculé UNIQUEMENT pour le joueur authentifié (uid déduit
+    // de son jeton), et seulement s'il le demande (?me présent, qui n'est plus
+    // qu'un drapeau « je veux mon rang »). On ignore la VALEUR de ?me : sinon un
+    // anonyme forcerait l'agrégation de rang — potentiellement coûteuse pour un
+    // score bas — en boucle avec des ids au hasard, contournant le cache. Un
+    // joueur ne peut donc calculer que SON propre rang.
     let me = null
-    if (req.query.me && mongoose.isValidObjectId(req.query.me)) {
-      const meId = String(req.query.me)
+    const uid = req.query.me ? optionalUid(req) : null
+    if (uid && mongoose.isValidObjectId(uid)) {
+      const meId = String(uid)
+      // S'il est dans le top-200 déjà chargé : rang exact (départage des égalités
+      // inclus) sans requête de plus ; sinon calcul léger.
       const inBoard = board.find((b) => String(b.userId) === meId)
       me = inBoard
         ? { rank: inBoard.rank, userId: inBoard.userId, pseudo: inBoard.pseudo, avatar: inBoard.avatar, score: inBoard.score }
