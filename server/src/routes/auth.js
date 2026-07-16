@@ -1,8 +1,10 @@
 import { Router } from 'express'
 import bcrypt from 'bcryptjs'
-import { User } from '../models/User.js'
+import { User, hashResetToken } from '../models/User.js'
 import { isAvatarKey, avatarForId } from '../avatars.js'
 import { signToken, requireAuth } from '../middleware/auth.js'
+import { sendPasswordReset } from '../mailer.js'
+import { config } from '../config.js'
 
 const router = Router()
 
@@ -108,6 +110,89 @@ router.post('/login', async (req, res) => {
   } catch (err) {
     console.error('login error', err)
     res.status(500).json({ error: 'Erreur serveur lors de la connexion.' })
+  }
+})
+
+// Réponse unique de /forgot, quoi qu'il advienne. Même philosophie que le login
+// juste au-dessus : dire « cet e-mail est inconnu » offrirait un énumérateur de
+// comptes à quiconque, sans même avoir besoin d'un mot de passe. Le prix est
+// assumé — celui qui se trompe d'adresse n'aura pas de diagnostic.
+const FORGOT_NEUTRE = {
+  ok: true,
+  message: 'Si un compte existe avec cet e-mail, un lien de réinitialisation vient d’être envoyé.'
+}
+
+// POST /api/auth/forgot
+router.post('/forgot', async (req, res) => {
+  try {
+    // Refus franc et indépendant de l'e-mail saisi : ça ne dit rien sur
+    // l'existence d'un compte, seulement que le serveur ne sait pas poster.
+    // En principe injoignable, le front masque le lien (cf. GET /api/config).
+    if (!config.mail.enabled)
+      return res.status(503).json({ error: 'La réinitialisation par e-mail n’est pas disponible pour le moment.' })
+
+    const email = str((req.body || {}).email).toLowerCase()
+    if (!EMAIL_RE.test(email)) return res.json(FORGOT_NEUTRE)
+
+    const user = await User.findOne({ email })
+    if (user) {
+      const token = user.createPasswordReset()
+      await user.save()
+
+      // Envoi NON attendu, volontairement. Deux raisons : un SMTP répond en
+      // centaines de millisecondes, et attendre creuserait entre e-mail connu
+      // et inconnu un écart de durée qui trahirait ce que le message tait ;
+      // et une panne du prestataire ne doit pas se traduire par une erreur
+      // côté joueur, qui la renverrait elle aussi. L'échec part donc aux logs.
+      // Le jeton posé n'est pas retiré : sans l'e-mail, personne ne l'a.
+      sendPasswordReset(user.email, user.pseudo, `${config.publicUrl}/reinitialiser?token=${token}`).catch((err) =>
+        console.error('forgot: envoi SMTP impossible pour', user.email, err.message)
+      )
+    }
+
+    res.json(FORGOT_NEUTRE)
+  } catch (err) {
+    console.error('forgot error', err)
+    res.status(500).json({ error: 'Erreur serveur.' })
+  }
+})
+
+// POST /api/auth/reset
+router.post('/reset', async (req, res) => {
+  try {
+    const body = req.body || {}
+    const token = str(body.token)
+    const password = typeof body.password === 'string' ? body.password : ''
+
+    if (password.length < PASSWORD_MIN)
+      return res.status(400).json({ error: `Le mot de passe doit faire au moins ${PASSWORD_MIN} caractères.` })
+    if (Buffer.byteLength(password) > PASSWORD_MAX)
+      return res.status(400).json({ error: `Le mot de passe ne peut pas dépasser ${PASSWORD_MAX} caractères.` })
+    // Sans ce garde, un jeton vide serait haché puis comparé : str() ayant déjà
+    // réduit tout non-chaîne à '', une requête bricolée chercherait le hash de
+    // la chaîne vide. Aucun compte ne le porte, mais autant ne pas poser la
+    // question à la base.
+    if (!token) return res.status(400).json({ error: 'Ce lien est invalide ou a expiré. Demandez-en un nouveau.' })
+
+    // L'expiration est dans la requête, pas testée après coup : un jeton périmé
+    // ne doit pas même remonter de la base.
+    const user = await User.findOne({
+      passwordResetHash: hashResetToken(token),
+      passwordResetExpires: { $gt: new Date() }
+    })
+    if (!user) return res.status(400).json({ error: 'Ce lien est invalide ou a expiré. Demandez-en un nouveau.' })
+
+    await user.setPassword(password)
+    // Usage unique : consommé dans la foulée, le même lien ne rejouera pas.
+    user.clearPasswordReset()
+    await user.save()
+
+    // Connecté dans la foulée : il vient de prouver qu'il possède l'adresse et
+    // de choisir son mot de passe, lui redemander de le saisir n'ajoute rien.
+    res.json({ token: signToken(user._id), user: user.toPublic() })
+  } catch (err) {
+    console.error('reset error', err)
+    res.status(500).json({ error: 'Erreur serveur.' })
   }
 })
 

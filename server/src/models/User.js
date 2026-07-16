@@ -1,7 +1,15 @@
 import mongoose from 'mongoose'
 import bcrypt from 'bcryptjs'
+import crypto from 'node:crypto'
+import { config } from '../config.js'
 
 const { Schema } = mongoose
+
+// Le jeton est stocké HACHÉ, jamais en clair : une fuite de la base ne doit pas
+// livrer les comptes dont un reset est en cours. SHA-256 et non bcrypt, car le
+// jeton est déjà 256 bits d'aléa — il n'y a rien à brute-forcer, et un hash
+// lent ne protégerait de rien tout en coûtant à chaque vérification.
+export const hashResetToken = (token) => crypto.createHash('sha256').update(token).digest('hex')
 
 const userSchema = new Schema(
   {
@@ -23,6 +31,12 @@ const userSchema = new Schema(
       trim: true
     },
     passwordHash: { type: String, required: true },
+
+    // Réinitialisation en cours. `null` au repos plutôt qu'absent : deux comptes
+    // sans reset ne doivent pas se retrouver à partager une valeur qui pourrait
+    // matcher une recherche. Jamais exposés par toPublic().
+    passwordResetHash: { type: String, default: null },
+    passwordResetExpires: { type: Date, default: null },
 
     // Raison sociale obligatoire : le jeu sert à qualifier des prospects
     // professionnels, un compte sans société n'a pas d'intérêt commercial.
@@ -76,6 +90,22 @@ userSchema.methods.setPassword = async function (plain) {
 
 userSchema.methods.verifyPassword = function (plain) {
   return bcrypt.compare(plain, this.passwordHash)
+}
+
+// Pose un jeton de réinitialisation et rend sa version EN CLAIR — la seule fois
+// où elle existe. L'appelant l'envoie par e-mail et l'oublie ; la base n'en
+// gardera que l'empreinte. randomBytes et non Math.random : c'est la seule
+// chose qui protège le compte pendant l'heure qui vient.
+userSchema.methods.createPasswordReset = function () {
+  const token = crypto.randomBytes(32).toString('base64url')
+  this.passwordResetHash = hashResetToken(token)
+  this.passwordResetExpires = new Date(Date.now() + config.resetTtlMs)
+  return token
+}
+
+userSchema.methods.clearPasswordReset = function () {
+  this.passwordResetHash = null
+  this.passwordResetExpires = null
 }
 
 // Niveau dérivé de l'XP : 500 XP par niveau (progressif léger)

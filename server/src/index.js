@@ -44,9 +44,25 @@ const loginLimiter = rateLimit({
   skipSuccessfulRequests: true, // seuls les échecs comptent
   message: { error: 'Trop de tentatives. Réessayez dans quelques minutes.' }
 })
+// /forgot fait envoyer un e-mail à un tiers sur simple demande d'un inconnu :
+// sans limite propre, c'est une arme pour inonder la boîte de quelqu'un et
+// brûler le quota du prestataire au passage. Bien plus strict que authLimiter,
+// qui ne protège lui que le CPU.
+const forgotLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Trop de demandes de réinitialisation. Réessayez dans une heure.' }
+})
 
 app.get('/api/health', (req, res) => res.json({ ok: true, ts: Date.now() }))
+// Ce que le front doit savoir AVANT d'afficher le formulaire. Le lien « mot de
+// passe oublié » ne s'affiche que si le serveur sait poster un e-mail : sans
+// SMTP configuré, ce lien mènerait à un silence, ce qui est pire que son absence.
+app.get('/api/config', (req, res) => res.json({ passwordResetEnabled: config.mail.enabled }))
 app.use('/api/auth/login', loginLimiter)
+app.use('/api/auth/forgot', forgotLimiter)
 app.use('/api/auth', authLimiter, authRoutes)
 app.use('/api/game', gameRoutes)
 app.use('/api/leaderboard', leaderboardRoutes)
