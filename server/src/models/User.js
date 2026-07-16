@@ -44,14 +44,18 @@ const userSchema = new Schema(
     societe: { type: String, trim: true, maxlength: 120, default: '' },
 
     // --- Consentements (art. 2 : deux cases obligatoires) ---
-    // On garde QUAND et QUELLE version, pour pouvoir le prouver en cas de litige :
-    // une case cochée qui ne laisse rien derrière elle n'a aucune valeur
-    // probatoire. required : un compte ne peut pas exister sans ces deux accords.
+    // Exigés et horodatés À L'INSCRIPTION par la route (auth.js) : c'est là qu'est
+    // la validation métier, et tout nouveau compte les porte.
+    // Volontairement NON `required` au schéma : un champ required ajouté après
+    // coup fait échouer le .save() de tout compte créé AVANT lui — or /session
+    // sauve l'utilisateur à chaque fin de partie. Un vieux compte (créé sans ces
+    // champs) crashait donc dès qu'il rejouait. On garde la trace quand elle
+    // existe, sans jamais bloquer un save() ultérieur.
     //   1) 18 ans + conditions + règlement
-    acceptedRulesAt: { type: Date, required: true },
-    acceptedRulesVersion: { type: String, required: true },
+    acceptedRulesAt: { type: Date, default: null },
+    acceptedRulesVersion: { type: String, default: null },
     //   2) traitement des données dans le cadre du jeu (RGPD)
-    acceptedDataAt: { type: Date, required: true },
+    acceptedDataAt: { type: Date, default: null },
     // Case FACULTATIVE : consentement à la prospection commerciale. Distinct et
     // par défaut faux — l'inscription au jeu ne vaut jamais opt-in marketing.
     acceptsMarketing: { type: Boolean, default: false },
