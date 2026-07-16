@@ -20,7 +20,31 @@ if (process.env.SENTRY_DSN) {
     // veut savoir ce qui casse, pas mesurer les temps de réponse.
     tracesSampleRate: 0,
     // Le commit déployé, quand Heroku le fournit : relie une erreur à sa version.
-    release: process.env.HEROKU_SLUG_COMMIT || undefined
+    release: process.env.HEROKU_SLUG_COMMIT || undefined,
+
+    // NE JAMAIS envoyer de données personnelles ni le corps des requêtes à
+    // Sentry. Par défaut, @sentry/node capture le body : une erreur sur
+    // /register, /login ou /reset y expédierait le MOT DE PASSE EN CLAIR (et le
+    // jeton de reset, l'e-mail, le téléphone). On coupe la capture à la source.
+    sendDefaultPii: false,
+    integrations: [Sentry.httpIntegration({ ignoreIncomingRequestBody: () => true })],
+    // Filet, indépendant de la version du SDK : on retire tout ce qui pourrait
+    // subsister — le corps, les cookies, et surtout l'en-tête Authorization, qui
+    // porte le JWT (valable 30 jours, donc une clé de compte s'il fuitait).
+    beforeSend(event) {
+      if (event.request) {
+        delete event.request.data
+        delete event.request.cookies
+        const h = event.request.headers
+        if (h) {
+          delete h.authorization
+          delete h.Authorization
+          delete h.cookie
+          delete h.Cookie
+        }
+      }
+      return event
+    }
   })
 }
 
