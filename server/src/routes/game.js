@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import crypto from 'node:crypto'
 import rateLimit from 'express-rate-limit'
+import * as Sentry from '@sentry/node'
 import { Score } from '../models/Score.js'
 import { GameSession } from '../models/GameSession.js'
 import { requireAuth } from '../middleware/auth.js'
@@ -89,6 +90,7 @@ router.post('/start', requireAuth, gameLimiter, async (req, res) => {
     })
     res.json({ sessionToken: token })
   } catch (err) {
+    Sentry.captureException(err)
     console.error('game/start error', err)
     res.status(500).json({ error: 'Impossible de démarrer la partie.' })
   }
@@ -202,6 +204,7 @@ router.post('/session', requireAuth, gameLimiter, async (req, res) => {
       badges: badgesState(user)
     })
   } catch (err) {
+    Sentry.captureException(err)
     console.error('session error', err)
     res.status(500).json({ error: 'Erreur lors de l’enregistrement de la partie.' })
   }

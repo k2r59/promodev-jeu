@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import bcrypt from 'bcryptjs'
+import * as Sentry from '@sentry/node'
 import { User, hashResetToken } from '../models/User.js'
 import { isAvatarKey, avatarForId } from '../avatars.js'
 import { signToken, requireAuth } from '../middleware/auth.js'
@@ -106,6 +107,7 @@ router.post('/register', async (req, res) => {
         error: champ === 'pseudo' ? 'Ce pseudo est déjà pris.' : 'Un compte existe déjà avec cet e-mail.'
       })
     }
+    Sentry.captureException(err)
     console.error('register error', err)
     res.status(500).json({ error: 'Erreur serveur lors de l’inscription.' })
   }
@@ -134,6 +136,7 @@ router.post('/login', async (req, res) => {
     const token = signToken(user._id)
     res.json({ token, user: user.toPublic() })
   } catch (err) {
+    Sentry.captureException(err)
     console.error('login error', err)
     res.status(500).json({ error: 'Erreur serveur lors de la connexion.' })
   }
@@ -178,6 +181,7 @@ router.post('/forgot', async (req, res) => {
 
     res.json(FORGOT_NEUTRE)
   } catch (err) {
+    Sentry.captureException(err)
     console.error('forgot error', err)
     res.status(500).json({ error: 'Erreur serveur.' })
   }
@@ -217,6 +221,7 @@ router.post('/reset', async (req, res) => {
     // de choisir son mot de passe, lui redemander de le saisir n'ajoute rien.
     res.json({ token: signToken(user._id), user: user.toPublic() })
   } catch (err) {
+    Sentry.captureException(err)
     console.error('reset error', err)
     res.status(500).json({ error: 'Erreur serveur.' })
   }

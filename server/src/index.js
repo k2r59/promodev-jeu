@@ -1,3 +1,6 @@
+// EN PREMIER, avant tout le reste : Sentry instrumente les modules au chargement.
+import { Sentry } from './instrument.js'
+
 import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
@@ -80,6 +83,13 @@ if (fs.existsSync(distPath)) {
     res.json({ message: 'API Promodev Jeu de l’Été. Lancez le frontend Vite en dev (port 5173).' })
   )
 }
+
+// Filet de sécurité Sentry : capture les erreurs qui remontent au middleware
+// d'erreur Express (throw non catché, next(err)). Doit venir APRÈS les routes.
+// Les 500 déjà catchés dans les routes sont, eux, remontés explicitement par
+// Sentry.captureException — c'est ce qui aurait signalé le bug de fin de partie.
+// No-op si Sentry n'est pas initialisé (dev sans DSN).
+Sentry.setupExpressErrorHandler(app)
 
 async function start() {
   await connectDB()

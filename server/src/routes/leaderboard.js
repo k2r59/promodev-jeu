@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import mongoose from 'mongoose'
+import * as Sentry from '@sentry/node'
 import { Score } from '../models/Score.js'
 import { config } from '../config.js'
 
@@ -82,6 +83,7 @@ router.get('/', async (req, res) => {
 
     res.json({ period, board, me, operationEnd: config.operationEnd })
   } catch (err) {
+    Sentry.captureException(err)
     console.error('leaderboard error', err)
     res.status(500).json({ error: 'Erreur lors du chargement du classement.' })
   }

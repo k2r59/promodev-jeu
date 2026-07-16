@@ -10,6 +10,7 @@
     "gen:avatars": "node scripts/gen-avatars.mjs"
   },
   "dependencies": {
+    "@sentry/vue": "^10.65.0",
     "lucide-vue-next": "^1.0.0",
     "ofetch": "^1.4.1",
     "pinia": "^2.2.2",
