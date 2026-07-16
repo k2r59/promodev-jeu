@@ -212,7 +212,13 @@ onUnmounted(() => clearInterval(timerId))
           <h2>Partie terminée !</h2>
           <div class="final-score">{{ live.score.toLocaleString('fr-FR') }} <small>points</small></div>
 
-          <div v-if="submitting" class="muted">Enregistrement du score…</div>
+          <div v-if="submitting" class="muted"><span class="spin" aria-hidden="true"></span>Enregistrement du score…</div>
+          <!-- Reste un bandeau inline là où les formulaires sont passés au
+               dialogue modal (AlertDialog) : ce n'est pas une erreur de saisie
+               à acquitter, c'est un état de cette carte-ci — il prend la place
+               des gains qu'on ne peut pas afficher. Un modal par-dessus
+               l'overlay de fin de partie empilerait deux fenêtres pour dire une
+               chose qu'on lit très bien ici. -->
           <div v-else-if="submitError" class="error-msg">{{ submitError }}</div>
 
           <template v-else-if="result">

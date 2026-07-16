@@ -7,11 +7,17 @@ import { ShieldCheck } from 'lucide-vue-next'
 import { AVATARS, DEFAULT_AVATAR } from '../avatars.js'
 import Avatar from './Avatar.vue'
 import PromoBlock from './PromoBlock.vue'
+import AlertDialog from './AlertDialog.vue'
 import { useAuthStore } from '../stores/auth.js'
+import { api } from '../api/client.js'
 
 const auth = useAuthStore()
 const route = useRoute()
 
+// Trois états : 'register', 'login', et 'forgot' — la demande de lien de
+// réinitialisation. 'forgot' est un sous-état de la connexion (l'onglet
+// Connexion y reste actif) et n'a pas d'URL : on n'y arrive que par un clic
+// depuis le formulaire, et un rechargement doit ramener à la connexion.
 // « Se connecter » du header ouvre /?mode=connexion : on suit ce paramètre.
 const mode = ref(route.query.mode === 'connexion' ? 'login' : 'register')
 watch(
@@ -22,6 +28,20 @@ watch(
 )
 const loading = ref(false)
 const error = ref('')
+const forgotSent = ref(false)
+
+// Le lien « mot de passe oublié » n'existe que si le serveur sait envoyer un
+// e-mail (SMTP configuré). Faux par défaut : tant qu'on ne sait pas, on
+// n'affiche rien. Se tromper dans ce sens ne coûte qu'un lien manquant ; dans
+// l'autre, on promettrait un e-mail qui ne partirait jamais.
+const resetEnabled = ref(false)
+
+// Changer d'onglet ne doit pas traîner l'erreur ni la confirmation du
+// précédent : elles ne parlent plus de ce qu'on regarde.
+watch(mode, () => {
+  error.value = ''
+  forgotSent.value = false
+})
 
 const form = reactive({ pseudo: '', societe: '', telephone: '', email: '', password: '', avatar: DEFAULT_AVATAR })
 
@@ -39,9 +59,15 @@ function onDocClick(e) {
 function onKeydown(e) {
   if (e.key === 'Escape') avatarOpen.value = false
 }
-onMounted(() => {
+onMounted(async () => {
   document.addEventListener('click', onDocClick)
   document.addEventListener('keydown', onKeydown)
+  try {
+    const cfg = await api('/config')
+    resetEnabled.value = !!cfg.passwordResetEnabled
+  } catch {
+    // Serveur muet : on laisse le lien caché plutôt que de l'afficher à l'aveugle.
+  }
 })
 onUnmounted(() => {
   document.removeEventListener('click', onDocClick)
@@ -52,7 +78,13 @@ async function submit() {
   error.value = ''
   loading.value = true
   try {
-    if (mode.value === 'register') {
+    if (mode.value === 'forgot') {
+      await api('/auth/forgot', { method: 'POST', body: { email: form.email } })
+      // Le serveur répond la même chose que l'e-mail existe ou non, pour ne pas
+      // livrer un énumérateur de comptes : on affiche donc une confirmation
+      // qui ne promet rien non plus.
+      forgotSent.value = true
+    } else if (mode.value === 'register') {
       await auth.register({
         pseudo: form.pseudo,
         email: form.email,
@@ -81,23 +113,39 @@ async function submit() {
           {{
             mode === 'register'
               ? 'Créez votre compte pour jouer, gagner des badges et tenter les 1 000 €.'
-              : 'Connectez-vous pour reprendre votre progression.'
+              : mode === 'forgot'
+                ? 'Indiquez l’e-mail de votre compte : nous vous enverrons un lien pour choisir un nouveau mot de passe.'
+                : 'Connectez-vous pour reprendre votre progression.'
           }}
         </p>
       </div>
 
       <div class="switch">
         <button :class="{ active: mode === 'register' }" @click="mode = 'register'">Inscription</button>
-        <button :class="{ active: mode === 'login' }" @click="mode = 'login'">Connexion</button>
+        <!-- 'forgot' garde l'onglet Connexion actif : c'est un détour dans ce
+             parcours-là, pas un troisième onglet. -->
+        <button :class="{ active: mode === 'login' || mode === 'forgot' }" @click="mode = 'login'">Connexion</button>
       </div>
 
-      <form @submit.prevent="submit">
-        <div v-if="error" class="error-msg">{{ error }}</div>
+      <!-- Confirmation d'envoi : remplace le formulaire, car il n'y a plus rien
+           à y faire. Le texte ne dit pas « c'est envoyé » mais « si un compte
+           existe » — le serveur lui-même refuse de trancher, pour ne pas
+           laisser énumérer les comptes. -->
+      <div v-if="mode === 'forgot' && forgotSent" class="apanel__sent">
+        <p class="apanel__sent-title">📬 C’est parti !</p>
+        <p>
+          Si un compte existe avec <b>{{ form.email }}</b
+          >, un lien de réinitialisation vient d’y être envoyé. Il est valable une heure.
+        </p>
+        <p class="apanel__sent-hint muted">Pensez à regarder dans vos spams.</p>
+        <button class="btn btn--lg btn--block" type="button" @click="mode = 'login'">Retour à la connexion</button>
+      </div>
 
+      <form v-else @submit.prevent="submit">
         <template v-if="mode === 'register'">
           <div class="row">
             <div class="field row__grow">
-              <label for="ap-pseudo">Pseudo</label>
+              <label for="ap-pseudo">Pseudo <span class="req" aria-hidden="true">*</span></label>
               <input
                 id="ap-pseudo"
                 v-model="form.pseudo"
@@ -141,7 +189,7 @@ async function submit() {
           </div>
 
           <div class="field">
-            <label for="ap-societe">Société</label>
+            <label for="ap-societe">Société <span class="req" aria-hidden="true">*</span></label>
             <input
               id="ap-societe"
               v-model="form.societe"
@@ -159,11 +207,22 @@ async function submit() {
         </template>
 
         <div class="field">
-          <label>E-mail</label>
-          <input v-model="form.email" class="input" type="email" placeholder="vous@exemple.fr" required />
+          <!-- Ce label n'avait pas de `for` et son champ pas d'id : le clic sur
+               l'intitulé ne donnait pas le focus, et un lecteur d'écran
+               annonçait un champ sans nom. -->
+          <label for="ap-email">E-mail <span v-if="mode === 'register'" class="req" aria-hidden="true">*</span></label>
+          <input
+            id="ap-email"
+            v-model="form.email"
+            class="input"
+            type="email"
+            placeholder="vous@exemple.fr"
+            autocomplete="email"
+            required
+          />
         </div>
-        <div class="field">
-          <label for="ap-pwd">Mot de passe</label>
+        <div v-if="mode !== 'forgot'" class="field">
+          <label for="ap-pwd">Mot de passe <span v-if="mode === 'register'" class="req" aria-hidden="true">*</span></label>
           <input
             id="ap-pwd"
             v-model="form.password"
@@ -176,9 +235,31 @@ async function submit() {
           />
         </div>
 
+        <!-- L'astérisque ne veut rien dire sans sa légende. `aria-hidden` sur
+             les étoiles elles-mêmes : l'attribut `required` des champs porte
+             déjà l'information pour les lecteurs d'écran, la répéter en
+             ponctuation ne ferait que bavarder. -->
+        <p v-if="mode === 'register'" class="apanel__req">* champs obligatoires</p>
+
         <button class="btn btn--lg btn--block" type="submit" :disabled="loading">
-          {{ loading ? 'Un instant…' : mode === 'register' ? '🚀 Créer mon compte' : '▶ Se connecter' }}
+          <span v-if="loading" class="spin" aria-hidden="true"></span>
+          {{
+            loading
+              ? 'Un instant…'
+              : mode === 'register'
+                ? '🚀 Créer mon compte'
+                : mode === 'forgot'
+                  ? '✉️ Envoyer le lien'
+                  : '▶ Se connecter'
+          }}
         </button>
+
+        <p v-if="mode === 'login' && resetEnabled" class="apanel__forgot">
+          <button class="link-btn" type="button" @click="mode = 'forgot'">Mot de passe oublié ?</button>
+        </p>
+        <p v-if="mode === 'forgot'" class="apanel__forgot">
+          <button class="link-btn" type="button" @click="mode = 'login'">Retour à la connexion</button>
+        </p>
       </form>
 
       <!-- La société est obligatoire (c'est la qualification du prospect) mais
@@ -206,6 +287,8 @@ async function submit() {
            sur la pleine largeur de la page d'aide. -->
       <PromoBlock class="apanel__promo" />
     </div>
+
+    <AlertDialog :message="error" @close="error = ''" />
   </div>
 </template>
 
@@ -268,11 +351,6 @@ async function submit() {
   font-size: 0.88rem;
   border-width: 1.5px;
 }
-.apanel :deep(.error-msg) {
-  padding: 7px 10px;
-  font-size: 0.8rem;
-  margin-bottom: 8px;
-}
 /* Bouton fin, sans le relief épais du .btn du jeu. */
 .apanel :deep(.btn) {
   padding: 11px 18px;
@@ -300,6 +378,52 @@ async function submit() {
   color: var(--ink-soft);
   text-transform: lowercase;
   letter-spacing: 0;
+}
+/* Corail, comme les erreurs : c'est la même famille d'information — ce que le
+   formulaire exige de vous. */
+.req {
+  color: var(--coral);
+  font-weight: 900;
+}
+.apanel__req {
+  margin: 0 0 10px;
+  font-size: 0.7rem;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+.apanel__forgot {
+  text-align: center;
+  margin: 10px 0 0;
+  font-size: 0.8rem;
+}
+
+/* Confirmation d'envoi. Vert : c'est une bonne nouvelle, pas une alerte — et
+   ça la distingue au premier coup d'œil du bandeau d'erreur, corail, qui
+   occupe la même place dans le panneau. */
+.apanel__sent {
+  padding: 14px 15px;
+  border-radius: var(--radius-sm);
+  background: rgba(46, 204, 113, 0.09);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+.apanel__sent p {
+  margin: 0 0 9px;
+}
+.apanel__sent-title {
+  font-weight: 900;
+  font-size: 0.95rem;
+}
+/* L'e-mail saisi peut être long et n'a aucun espace où se couper : sans ça il
+   élargissait le panneau, qui tient une largeur imposée par le plateau. */
+.apanel__sent b {
+  overflow-wrap: anywhere;
+}
+.apanel__sent-hint {
+  font-size: 0.76rem;
+}
+.apanel__sent .btn {
+  margin-top: 4px;
 }
 
 /* Avatar en popover : la grille de 10 mangeait la hauteur du panneau. */

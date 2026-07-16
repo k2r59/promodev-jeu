@@ -18,18 +18,22 @@ export const useAuthStore = defineStore('auth', () => {
     else localStorage.removeItem(TOKEN_KEY)
   }
 
-  async function register(payload) {
-    const res = await api('/auth/register', { method: 'POST', body: payload })
+  // Ouvre une session à partir d'une réponse { token, user }. Inscription,
+  // connexion et réinitialisation du mot de passe rendent toutes la même chose
+  // et ouvrent la même session : un seul chemin, pour que la clé de stockage et
+  // l'injection du token ne s'écrivent qu'ici.
+  function adopt(res) {
     persist(res.token)
     user.value = res.user
     return res.user
   }
 
+  async function register(payload) {
+    return adopt(await api('/auth/register', { method: 'POST', body: payload }))
+  }
+
   async function login(payload) {
-    const res = await api('/auth/login', { method: 'POST', body: payload })
-    persist(res.token)
-    user.value = res.user
-    return res.user
+    return adopt(await api('/auth/login', { method: 'POST', body: payload }))
   }
 
   async function fetchMe() {
@@ -58,5 +62,5 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
   }
 
-  return { user, token, ready, isAuth, register, login, fetchMe, setUser, logout }
+  return { user, token, ready, isAuth, adopt, register, login, fetchMe, setUser, logout }
 })
