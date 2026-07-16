@@ -145,8 +145,13 @@ onUnmounted(() => clearInterval(timerId))
 
       <div class="hud__item hud__item--score">
         <span class="hud__lbl">Score</span>
+        <!-- L'objectif est collé au score plutôt que posé sur la jauge : il ne
+             coûte ainsi aucune hauteur (contractuelle, cf. --hud-h), et surtout
+             il dit d'un coup ce que la jauge seule taisait — que la partie est
+             une tentative VERS un but, et non un compteur qui s'empile. -->
         <span class="hud__val hud__val--score">
           <Star :size="17" fill="currentColor" aria-hidden="true" />{{ live.score.toLocaleString('fr-FR') }}
+          <small class="hud__goal">/ {{ OBJECTIVE.toLocaleString('fr-FR') }}</small>
         </span>
       </div>
       <div class="hud__item hud__item--time">
@@ -309,6 +314,14 @@ onUnmounted(() => clearInterval(timerId))
 }
 .hud__val--score {
   color: var(--coral);
+}
+/* Le but est un repère, pas une performance : il doit se lire sans disputer
+   l'œil au score. Sans ces règles, le <small> héritait du corail et du gras 900
+   de .hud__val et les deux nombres sortaient au même poids. */
+.hud__goal {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--ink-soft);
 }
 .hud__val--time {
   color: var(--sea);
