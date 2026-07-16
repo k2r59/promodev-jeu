@@ -41,6 +41,14 @@ const userSchema = new Schema(
     // Raison sociale obligatoire : le jeu sert à qualifier des prospects
     // professionnels, un compte sans société n'a pas d'intérêt commercial.
     societe: { type: String, required: true, trim: true, maxlength: 120 },
+
+    // Consentement au règlement (art. 2 : le participant DOIT cocher la case).
+    // On garde la trace de QUAND et de QUELLE version, pour pouvoir le prouver
+    // en cas de litige — une case cochée qui ne laisse rien derrière elle n'a
+    // aucune valeur probatoire. required : un compte sans consentement ne peut
+    // pas exister, c'est la porte d'entrée du jeu.
+    acceptedRulesAt: { type: Date, required: true },
+    acceptedRulesVersion: { type: String, required: true },
     // Téléphone facultatif : on ne bloque pas une inscription pour ça.
     telephone: { type: String, trim: true, maxlength: 30, default: '' },
 

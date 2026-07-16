@@ -43,6 +43,11 @@ export const config = {
     .map((s) => s.trim())
     .filter(Boolean),
   operationEnd: process.env.OPERATION_END || '2026-09-15T23:59:59.000Z',
+  // Version du règlement en vigueur, stockée avec le consentement de chaque
+  // joueur. L'article 14 permet de modifier le règlement en cours d'opération :
+  // sans version, on ne saurait plus dire QUELLE version chacun a acceptée. À
+  // incrémenter à chaque révision du texte de ReglementView.
+  rulesVersion: process.env.RULES_VERSION || '2026-07',
   publicUrl,
   mail: {
     host: smtpHost,

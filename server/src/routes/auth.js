@@ -33,6 +33,9 @@ router.post('/register', async (req, res) => {
     const telephone = str(body.telephone)
     const password = typeof body.password === 'string' ? body.password : ''
     const avatar = str(body.avatar)
+    // Le front envoie un booléen ; on ne se fie qu'à `true` strict, pour qu'une
+    // chaîne « false » ou un objet ne passent pas pour un consentement.
+    const acceptRules = body.acceptRules === true
 
     if (pseudo.length < 2 || pseudo.length > 20)
       return res.status(400).json({ error: 'Le pseudo doit faire entre 2 et 20 caractères.' })
@@ -50,6 +53,12 @@ router.post('/register', async (req, res) => {
     if (telephone && !PHONE_RE.test(telephone))
       return res.status(400).json({ error: 'Numéro de téléphone invalide.' })
 
+    // Sans consentement, pas de compte : c'est une exigence du règlement, pas
+    // une préférence d'UI, donc le serveur tranche — la case cochée côté client
+    // ne prouve rien à elle seule.
+    if (!acceptRules)
+      return res.status(400).json({ error: 'Vous devez accepter le règlement pour participer.' })
+
     const exists = await User.findOne({ email })
     if (exists) return res.status(409).json({ error: 'Un compte existe déjà avec cet e-mail.' })
     // Même collation que l'index (cf. models/User.js) : sans elle, « Hervé »
@@ -63,7 +72,16 @@ router.post('/register', async (req, res) => {
     // mais un client bricolé pouvait y mettre ce qu'il voulait). On n'accepte
     // plus qu'une clé connue, et on en attribue une plutôt que de rejeter : ce
     // n'est pas un champ assez important pour bloquer une inscription.
-    const user = new User({ pseudo, email, societe, telephone })
+    const user = new User({
+      pseudo,
+      email,
+      societe,
+      telephone,
+      // Horodaté par le serveur, jamais par le client : c'est l'heure de la
+      // base qui fait foi, comme pour les scores.
+      acceptedRulesAt: new Date(),
+      acceptedRulesVersion: config.rulesVersion
+    })
     user.avatar = isAvatarKey(avatar) ? avatar : avatarForId(user._id)
     await user.setPassword(password)
     await user.save()
