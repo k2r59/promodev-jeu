@@ -54,7 +54,7 @@ onMounted(load)
           <h1>Classement</h1>
           <p>
             Seul votre <b>meilleur score</b> est conservé. En fin d'opération, les
-            <b>100 meilleurs</b> deviennent finalistes pour le tirage au sort des 1 000 € !
+            <b>100 meilleurs</b> deviennent finalistes pour le tirage au sort des 600 € de cartes cadeaux !
           </p>
         </div>
         <!-- Le décompte quitte le paragraphe : noyé dedans, il se lisait comme

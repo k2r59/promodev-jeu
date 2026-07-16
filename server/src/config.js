@@ -42,7 +42,10 @@ export const config = {
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean),
-  operationEnd: process.env.OPERATION_END || '2026-09-15T23:59:59.000Z',
+  // Fin de l'opération : 31 août 2026, 23 h 59 min 59 s heure de Paris. L'offset
+  // +02:00 (CEST) est explicite, pour que la valeur dise l'heure de Paris et non
+  // une heure UTC qu'il faudrait convertir de tête.
+  operationEnd: process.env.OPERATION_END || '2026-08-31T23:59:59+02:00',
   // Version du règlement en vigueur, stockée avec le consentement de chaque
   // joueur. L'article 14 permet de modifier le règlement en cours d'opération :
   // sans version, on ne saurait plus dire QUELLE version chacun a acceptée. À

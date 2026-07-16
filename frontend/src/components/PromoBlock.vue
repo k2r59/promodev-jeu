@@ -20,8 +20,8 @@ const MAILTO = 'mailto:contact@promo.dev?subject=' + encodeURIComponent("Le Jeu 
       <h3>Ce jeu est une opération Promodev</h3>
       <p>
         Le Jeu de l'Été, c'est nous : conception, mécanique, lots, mise en ligne.
-        Promodev imagine et opère des opérations promotionnelles — et le grand prix
-        de celle-ci, ce sont 1 000 € de remise sur la vôtre.
+        Promodev imagine et opère des opérations promotionnelles — comme celle-ci,
+        avec ses 600 € de cartes cadeaux à gagner.
       </p>
       <p class="promo__ask">Une idée d'opération ? Parlons-en.</p>
       <div class="promo__actions">

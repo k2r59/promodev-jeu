@@ -9,6 +9,7 @@ import HelpView from './views/HelpView.vue'
 import ResetPasswordView from './views/ResetPasswordView.vue'
 import MentionsLegalesView from './views/MentionsLegalesView.vue'
 import ReglementView from './views/ReglementView.vue'
+import DotationView from './views/DotationView.vue'
 
 // Le jeu et le formulaire vivent désormais dans la colonne centrale de l'accueil :
 // ces deux URL n'ont plus d'écran propre mais restent valides (liens, favoris).
@@ -19,6 +20,7 @@ const routes = [
   { path: '/classement', name: 'leaderboard', component: LeaderboardView },
   { path: '/defis', name: 'challenges', component: ChallengesView, meta: { requiresAuth: true } },
   { path: '/recompenses', name: 'rewards', component: RewardsView },
+  { path: '/dotation', name: 'dotation', component: DotationView },
   { path: '/aide', name: 'help', component: HelpView },
   // Cible des liens envoyés par e-mail (/reinitialiser?token=…). Doit rester
   // hors de la garde requiresAuth : on y arrive justement sans pouvoir se

@@ -1,11 +1,10 @@
 <script setup>
-// Règlement complet du Jeu, repris fidèlement du document fourni. Les 【】
-// marquent les trous du gabarit d'origine encore à combler (nombre de gagnants,
-// montants, date de début, date du tirage). La date de FIN, elle, est tranchée :
-// 15 septembre 2026, alignée sur OPERATION_END (l'app affiche déjà ce décompte).
-// Le tirage a donc été repoussé APRÈS cette date : l'annoncer avant que le jeu
-// soit clos n'aurait aucun sens. La page ne doit pas être mise en ligne tant
-// que des 【】 subsistent.
+// Règlement complet du Jeu, repris fidèlement du document fourni. Dates,
+// dotation et nombre de gagnants sont désormais tranchés (op. 1er→31 août 2026,
+// tirage le 4 septembre ; 3 cartes cadeaux 300/200/100 = 600 €). Ne subsistent
+// en 【】 que les données société — capital, SIRET, directeur de publication,
+// date et n° de version — qui relèvent de Jérémy. La page ne doit pas être mise
+// en ligne tant que ces 【】 subsistent.
 import { Scale } from 'lucide-vue-next'
 </script>
 
@@ -50,11 +49,10 @@ import { Scale } from 'lucide-vue-next'
       <article class="reg__art">
         <h2>Article 3 — Durée du Jeu</h2>
         <p>
-          Le Jeu est ouvert du <mark>【date de début】</mark> à <mark>【heure de début】</mark>, heure de
-          Paris, au <b>15 septembre 2026 à 23 h 59 min 59 s</b>, heure de Paris. Toute participation
-          enregistrée après cette date ne sera pas prise en compte. Les systèmes informatiques et
-          horodatages de l'Organisateur font foi. Le tirage au sort sera effectué au plus tard le
-          <mark>【date du tirage — proposition : 19 septembre 2026, soit après la clôture】</mark>.
+          Le Jeu est ouvert du <b>1<sup>er</sup> août 2026 à 0 h 00</b> au
+          <b>31 août 2026 à 23 h 59 min 59 s</b>, heure de Paris. Toute participation enregistrée après
+          cette date et cette heure ne sera pas prise en compte. Les systèmes informatiques et horodatages
+          de l'Organisateur font foi. Le tirage au sort sera effectué le <b>4 septembre 2026</b>.
         </p>
       </article>
 
@@ -106,22 +104,23 @@ import { Scale } from 'lucide-vue-next'
           À la clôture, l'Organisateur établira le classement définitif après vérification des comptes, des
           scores et des participations. Les cent participants aux meilleurs scores valides seront intégrés au
           tirage au sort ; si moins de cent participants remplissent les conditions, le tirage portera sur
-          l'ensemble des participants valablement classés. Le tirage désignera
-          <mark>【nombre de gagnants】</mark> gagnant(s) et trois gagnants suppléants par lot, au moyen d'un
-          procédé informatique aléatoire. Une seule dotation par personne et par foyer. Figurer parmi les
-          cent meilleurs ne garantit pas l'obtention d'un lot.
+          l'ensemble des participants valablement classés. Le tirage désignera <b>trois (3) gagnants</b> et
+          trois gagnants suppléants par lot, au moyen d'un procédé informatique aléatoire ; les gagnants se
+          voient attribuer, dans l'ordre du tirage, la carte cadeau de 300 €, celle de 200 €, puis celle de
+          100 €. Une seule dotation par personne et par foyer. Figurer parmi les cent meilleurs ne garantit
+          pas l'obtention d'un lot.
         </p>
       </article>
 
       <article class="reg__art">
         <h2>Article 8 — Dotation</h2>
         <p>
-          Le Jeu permet de gagner&nbsp;: <mark>【description précise du lot】</mark>. La valeur commerciale
-          indicative est de <mark>【montant】</mark> euros TTC (valeur totale des dotations&nbsp;:
-          <mark>【montant total】</mark> euros TTC). Le lot ne peut donner lieu à aucune contrepartie
-          financière, remboursement, échange contre des espèces, ni remplacement, sauf décision expresse de
-          l'Organisateur. En cas d'indisponibilité, l'Organisateur pourra remplacer le lot par un lot de
-          valeur équivalente ou supérieure.
+          Le Jeu permet de gagner <b>trois cartes cadeaux électroniques multi-enseignes</b>, d'une valeur
+          respective de <b>300 €</b>, <b>200 €</b> et <b>100 €</b> TTC. La valeur commerciale totale des
+          dotations mises en jeu s'élève à <b>600 €</b> TTC. Le lot ne peut donner lieu à aucune
+          contrepartie financière, remboursement, échange contre des espèces, ni remplacement, sauf décision
+          expresse de l'Organisateur. En cas d'indisponibilité, l'Organisateur pourra remplacer le lot par
+          un lot de valeur équivalente ou supérieure.
         </p>
       </article>
 
