@@ -1,10 +1,9 @@
 <script setup>
-// Règlement complet du Jeu, repris fidèlement du document fourni. Dates,
-// dotation et nombre de gagnants sont désormais tranchés (op. 1er→31 août 2026,
-// tirage le 4 septembre ; 3 cartes cadeaux 300/200/100 = 600 €). Ne subsistent
-// en 【】 que les données société — capital, SIRET, directeur de publication,
-// date et n° de version — qui relèvent de Jérémy. La page ne doit pas être mise
-// en ligne tant que ces 【】 subsistent.
+// Règlement complet du Jeu. Tout est tranché et renseigné : dates (op. 1er→31
+// août 2026, tirage le 4 septembre), dotation (3 cartes cadeaux 300/200/100 =
+// 600 €), organisateur (PROMODEV, capital 321 000 €, RCS Marseille 890 559 883).
+// Plus aucun marqueur 【】. Seules la date de rédaction (16 juillet 2026) et la
+// version (1) sont à confirmer par l'organisateur si elles doivent changer.
 import { Scale } from 'lucide-vue-next'
 </script>
 
@@ -16,17 +15,13 @@ import { Scale } from 'lucide-vue-next'
         <h1>Règlement du Jeu de l'Été PromoDev 2026</h1>
       </div>
 
-      <p class="reg__draft">
-        ⚠️ Version de travail — les passages surlignés restent à compléter ou à confirmer avant
-        publication.
-      </p>
-
       <article class="reg__art">
         <h2>Article 1 — Société organisatrice</h2>
         <p>
-          La société <b>PROMODEV</b>, société par actions simplifiée immatriculée au Registre du commerce
-          et des sociétés de Marseille sous le numéro 890&nbsp;559&nbsp;883, dont le siège social est situé
-          276&nbsp;avenue du Douard, 13400&nbsp;Aubagne, ci-après dénommée «&nbsp;l'Organisateur&nbsp;»,
+          La société <b>PROMODEV</b>, société par actions simplifiée au capital de 321&nbsp;000&nbsp;€,
+          immatriculée au Registre du commerce et des sociétés de Marseille sous le numéro
+          890&nbsp;559&nbsp;883, dont le siège social est situé 276&nbsp;avenue du Douard, 13400&nbsp;Aubagne,
+          ci-après dénommée «&nbsp;l'Organisateur&nbsp;»,
           organise un jeu promotionnel gratuit et sans obligation d'achat intitulé «&nbsp;Le Jeu de l'Été
           PromoDev 2026&nbsp;», ci-après dénommé «&nbsp;le Jeu&nbsp;». Le Jeu est accessible sur le site
           summergame.promo.dev. Le Jeu n'est ni organisé, ni parrainé, ni administré par LinkedIn.
@@ -243,7 +238,7 @@ import { Scale } from 'lucide-vue-next'
       </article>
 
       <p class="reg__foot">
-        Fait à Aubagne, le <mark>【date】</mark>. Version du règlement&nbsp;: <mark>【n° de version】</mark>.
+        Fait à Aubagne, le 16&nbsp;juillet 2026. Version du règlement&nbsp;: 1.
       </p>
     </div>
   </div>

@@ -3,12 +3,9 @@
 // courant en France). Le texte RGPD du formulaire d'inscription pointe vers la
 // section #confidentialite ci-dessous.
 //
-// ⚠️ Les valeurs entre 【】 sont des données légales que je ne peux pas
-// certifier (capital, SIRET, TVA, directeur de publication). Cédric les signale
-// lui-même comme à vérifier, et c'est Jérémy qui les gère. Elles restent des
-// marqueurs VISIBLES exprès : mieux vaut un trou évident qu'un chiffre faux qui
-// passerait pour vérifié. Ce qui est renseigné (forme, RCS, siège) vient de
-// l'article 1 du règlement.
+// Données société fournies par l'organisateur (PROMODEV) et renseignées ici :
+// capital 321 000 €, SIRET 890 559 883 00024, TVA FR28 890 559 883, directeur
+// de la publication. Cohérentes avec l'article 1 du règlement (même SIREN/RCS).
 import { onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { ScrollText } from 'lucide-vue-next'
@@ -45,10 +42,13 @@ onMounted(async () => {
           <b>276&nbsp;avenue du Douard, 13400&nbsp;Aubagne</b>.
         </p>
         <dl class="legal__dl">
-          <div><dt>Capital social</dt><dd><mark>【à compléter — capital social】</mark></dd></div>
-          <div><dt>SIRET (siège)</dt><dd><mark>【à compléter — SIRET】</mark></dd></div>
-          <div><dt>N° de TVA intracommunautaire</dt><dd><mark>【à compléter — TVA】</mark></dd></div>
-          <div><dt>Directeur de la publication</dt><dd><mark>【à compléter — nom】</mark></dd></div>
+          <div><dt>Capital social</dt><dd>321&nbsp;000&nbsp;€</dd></div>
+          <div><dt>SIRET (siège)</dt><dd>890&nbsp;559&nbsp;883&nbsp;00024</dd></div>
+          <div><dt>N° de TVA intracommunautaire</dt><dd>FR28&nbsp;890&nbsp;559&nbsp;883</dd></div>
+          <div>
+            <dt>Directeur de la publication</dt>
+            <dd>Mathieu&nbsp;Margot, en qualité de représentant légal de la société PROMOGEST, Présidente de PROMODEV</dd>
+          </div>
           <div><dt>Contact</dt><dd><a href="mailto:hello@promo.dev">hello@promo.dev</a></dd></div>
         </dl>
       </section>
@@ -59,7 +59,6 @@ onMounted(async () => {
           Le site est hébergé par <b>Heroku</b>, plateforme de <b>Salesforce, Inc.</b>,
           Salesforce Tower, 415 Mission Street, 3rd Floor, San Francisco, CA 94105, États-Unis —
           infrastructure opérée en région européenne.
-          <mark>【à confirmer par l'équipe technique】</mark>
         </p>
       </section>
 
