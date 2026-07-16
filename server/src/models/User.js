@@ -38,17 +38,24 @@ const userSchema = new Schema(
     passwordResetHash: { type: String, default: null },
     passwordResetExpires: { type: Date, default: null },
 
-    // Raison sociale obligatoire : le jeu sert à qualifier des prospects
-    // professionnels, un compte sans société n'a pas d'intérêt commercial.
-    societe: { type: String, required: true, trim: true, maxlength: 120 },
+    // Raison sociale FACULTATIVE : le jeu s'ouvre aux joueurs qui participent à
+    // titre personnel comme professionnel, on ne bloque plus une inscription
+    // faute de société (décision produit, cf. règlement art. 4).
+    societe: { type: String, trim: true, maxlength: 120, default: '' },
 
-    // Consentement au règlement (art. 2 : le participant DOIT cocher la case).
-    // On garde la trace de QUAND et de QUELLE version, pour pouvoir le prouver
-    // en cas de litige — une case cochée qui ne laisse rien derrière elle n'a
-    // aucune valeur probatoire. required : un compte sans consentement ne peut
-    // pas exister, c'est la porte d'entrée du jeu.
+    // --- Consentements (art. 2 : deux cases obligatoires) ---
+    // On garde QUAND et QUELLE version, pour pouvoir le prouver en cas de litige :
+    // une case cochée qui ne laisse rien derrière elle n'a aucune valeur
+    // probatoire. required : un compte ne peut pas exister sans ces deux accords.
+    //   1) 18 ans + conditions + règlement
     acceptedRulesAt: { type: Date, required: true },
     acceptedRulesVersion: { type: String, required: true },
+    //   2) traitement des données dans le cadre du jeu (RGPD)
+    acceptedDataAt: { type: Date, required: true },
+    // Case FACULTATIVE : consentement à la prospection commerciale. Distinct et
+    // par défaut faux — l'inscription au jeu ne vaut jamais opt-in marketing.
+    acceptsMarketing: { type: Boolean, default: false },
+    acceptedMarketingAt: { type: Date, default: null },
     // Téléphone facultatif : on ne bloque pas une inscription pour ça.
     telephone: { type: String, trim: true, maxlength: 30, default: '' },
 

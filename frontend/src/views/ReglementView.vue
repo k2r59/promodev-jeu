@@ -40,9 +40,21 @@ import { Scale } from 'lucide-vue-next'
           deux minutes. À l'issue de la période de participation, un tirage au sort sera effectué parmi les
           cent participants les mieux classés. La participation implique la prise de connaissance préalable
           du présent règlement, son acceptation complète et sans réserve, et le respect des règles de
-          fonctionnement du Jeu. Avant de pouvoir jouer, chaque participant doit cocher la case d'acceptation
-          du règlement. Le participant peut consulter, télécharger et conserver le règlement avant de
-          l'accepter.
+          fonctionnement du Jeu. Avant de pouvoir jouer, chaque participant doit cocher obligatoirement les
+          deux cases suivantes :
+        </p>
+        <ul>
+          <li>
+            «&nbsp;Je certifie être âgé(e) de dix-huit ans ou plus, remplir les conditions de participation
+            et avoir lu et accepté sans réserve le règlement du Jeu de l'Été PromoDev.&nbsp;»
+          </li>
+          <li>
+            «&nbsp;J'accepte le traitement de mes données personnelles par PromoDev, uniquement dans le cadre
+            du jeu, conformément à la politique de confidentialité.&nbsp;»
+          </li>
+        </ul>
+        <p>
+          Le participant peut consulter, télécharger et conserver le règlement avant de l'accepter.
         </p>
       </article>
 
@@ -61,15 +73,15 @@ import { Scale } from 'lucide-vue-next'
         <p>
           Le Jeu est gratuit et sans obligation d'achat. Il est ouvert à toute personne physique âgée de
           dix-huit ans ou plus à la date de son inscription, résidant en France métropolitaine (Corse
-          comprise), disposant d'un accès à Internet et d'une adresse électronique personnelle valide, et
-          participant à titre personnel et non au nom d'une société ou d'un tiers.
+          comprise), disposant d'un accès à Internet et d'une adresse électronique personnelle ou
+          professionnelle valide.
         </p>
         <p>
           Sont exclus les salariés, dirigeants et mandataires sociaux de l'Organisateur, les personnes ayant
           participé à la conception ou à l'administration du Jeu, ainsi que les membres de leur foyer et
-          leurs proches. Les personnes participant dans un contexte professionnel doivent s'assurer que leur
-          participation et l'acceptation éventuelle d'un lot sont compatibles avec les règles internes de
-          leur employeur.
+          leurs proches. Les personnes participant dans un contexte professionnel et avec leur adresse
+          électronique professionnelle doivent s'assurer que leur participation et l'acceptation éventuelle
+          d'un lot sont compatibles avec les règles internes de leur employeur.
         </p>
       </article>
 
@@ -115,12 +127,13 @@ import { Scale } from 'lucide-vue-next'
       <article class="reg__art">
         <h2>Article 8 — Dotation</h2>
         <p>
-          Le Jeu permet de gagner <b>trois cartes cadeaux électroniques multi-enseignes</b>, d'une valeur
-          respective de <b>300 €</b>, <b>200 €</b> et <b>100 €</b> TTC. La valeur commerciale totale des
-          dotations mises en jeu s'élève à <b>600 €</b> TTC. Le lot ne peut donner lieu à aucune
-          contrepartie financière, remboursement, échange contre des espèces, ni remplacement, sauf décision
-          expresse de l'Organisateur. En cas d'indisponibilité, l'Organisateur pourra remplacer le lot par
-          un lot de valeur équivalente ou supérieure.
+          Le Jeu est doté des trois lots suivants&nbsp;: une e-carte cadeau dématérialisée
+          «&nbsp;<b>Ma Carte Cadeau</b>&nbsp;» d'une valeur faciale de <b>300&nbsp;€</b> ; une deuxième
+          d'une valeur faciale de <b>200&nbsp;€</b> ; une troisième d'une valeur faciale de
+          <b>100&nbsp;€</b>. La valeur faciale totale des dotations mises en jeu s'élève à <b>600&nbsp;€</b>.
+          Le lot ne peut donner lieu à aucune contrepartie financière, remboursement, échange contre des
+          espèces, ni remplacement, sauf décision expresse de l'Organisateur. En cas d'indisponibilité,
+          l'Organisateur pourra remplacer le lot par un lot de valeur équivalente ou supérieure.
         </p>
       </article>
 

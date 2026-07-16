@@ -33,9 +33,11 @@ router.post('/register', async (req, res) => {
     const telephone = str(body.telephone)
     const password = typeof body.password === 'string' ? body.password : ''
     const avatar = str(body.avatar)
-    // Le front envoie un booléen ; on ne se fie qu'à `true` strict, pour qu'une
+    // Le front envoie des booléens ; on ne se fie qu'à `true` strict, pour qu'une
     // chaîne « false » ou un objet ne passent pas pour un consentement.
-    const acceptRules = body.acceptRules === true
+    const acceptRules = body.acceptRules === true // 18 ans + règlement
+    const acceptData = body.acceptData === true // traitement des données (RGPD)
+    const acceptMarketing = body.acceptMarketing === true // prospection (facultatif)
 
     if (pseudo.length < 2 || pseudo.length > 20)
       return res.status(400).json({ error: 'Le pseudo doit faire entre 2 et 20 caractères.' })
@@ -46,18 +48,20 @@ router.post('/register', async (req, res) => {
     if (Buffer.byteLength(password) > PASSWORD_MAX)
       return res.status(400).json({ error: `Le mot de passe ne peut pas dépasser ${PASSWORD_MAX} caractères.` })
 
-    // Obligatoire : le jeu qualifie des prospects professionnels.
-    if (societe.length < 2 || societe.length > 120)
+    // Facultative désormais : on ne la valide que si elle est remplie (comme le
+    // téléphone). Vide, elle passe.
+    if (societe && (societe.length < 2 || societe.length > 120))
       return res.status(400).json({ error: 'La raison sociale doit faire entre 2 et 120 caractères.' })
-    // Seul champ facultatif : on ne le valide que s'il est rempli.
     if (telephone && !PHONE_RE.test(telephone))
       return res.status(400).json({ error: 'Numéro de téléphone invalide.' })
 
-    // Sans consentement, pas de compte : c'est une exigence du règlement, pas
-    // une préférence d'UI, donc le serveur tranche — la case cochée côté client
-    // ne prouve rien à elle seule.
-    if (!acceptRules)
-      return res.status(400).json({ error: 'Vous devez accepter le règlement pour participer.' })
+    // Sans les DEUX consentements obligatoires, pas de compte : exigence du
+    // règlement (art. 2), donc le serveur tranche — les cases cochées côté
+    // client ne prouvent rien à elles seules.
+    if (!acceptRules || !acceptData)
+      return res.status(400).json({
+        error: 'Vous devez accepter le règlement et le traitement de vos données pour participer.'
+      })
 
     const exists = await User.findOne({ email })
     if (exists) return res.status(409).json({ error: 'Un compte existe déjà avec cet e-mail.' })
@@ -72,15 +76,19 @@ router.post('/register', async (req, res) => {
     // mais un client bricolé pouvait y mettre ce qu'il voulait). On n'accepte
     // plus qu'une clé connue, et on en attribue une plutôt que de rejeter : ce
     // n'est pas un champ assez important pour bloquer une inscription.
+    // Un seul instant pour tous les consentements de cette inscription : c'est
+    // l'heure du serveur qui fait foi, jamais le client (comme pour les scores).
+    const now = new Date()
     const user = new User({
       pseudo,
       email,
       societe,
       telephone,
-      // Horodaté par le serveur, jamais par le client : c'est l'heure de la
-      // base qui fait foi, comme pour les scores.
-      acceptedRulesAt: new Date(),
-      acceptedRulesVersion: config.rulesVersion
+      acceptedRulesAt: now,
+      acceptedRulesVersion: config.rulesVersion,
+      acceptedDataAt: now,
+      acceptsMarketing: acceptMarketing,
+      acceptedMarketingAt: acceptMarketing ? now : null
     })
     user.avatar = isAvatarKey(avatar) ? avatar : avatarForId(user._id)
     await user.setPassword(password)

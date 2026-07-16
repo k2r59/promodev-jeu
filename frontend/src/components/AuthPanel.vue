@@ -50,9 +50,11 @@ const form = reactive({
   email: '',
   password: '',
   avatar: DEFAULT_AVATAR,
-  // Acceptation du règlement (art. 2). Le serveur la réexige : la case n'est
-  // qu'un rappel visuel, elle ne prouve rien à elle seule.
-  acceptRules: false
+  // Consentements (art. 2). Le serveur les réexige : les cases ne sont qu'un
+  // rappel visuel, elles ne prouvent rien à elles seules.
+  acceptRules: false, // 18 ans + règlement — obligatoire
+  acceptData: false, // traitement des données (RGPD) — obligatoire
+  acceptMarketing: false // prospection — facultatif
 })
 
 // Choix de l'avatar en popover : la grille mangeait la hauteur du panneau.
@@ -102,7 +104,9 @@ async function submit() {
         avatar: form.avatar,
         societe: form.societe,
         telephone: form.telephone,
-        acceptRules: form.acceptRules
+        acceptRules: form.acceptRules,
+        acceptData: form.acceptData,
+        acceptMarketing: form.acceptMarketing
       })
     } else {
       await auth.login({ email: form.email, password: form.password })
@@ -200,7 +204,7 @@ async function submit() {
           </div>
 
           <div class="field">
-            <label for="ap-societe">Société <span class="req" aria-hidden="true">*</span></label>
+            <label for="ap-societe">Société <span class="opt">facultatif</span></label>
             <input
               id="ap-societe"
               v-model="form.societe"
@@ -208,7 +212,6 @@ async function submit() {
               type="text"
               placeholder="Raison sociale"
               maxlength="120"
-              required
             />
           </div>
           <div class="field">
@@ -274,12 +277,31 @@ async function submit() {
               <span class="req" aria-hidden="true">*</span>
             </span>
           </label>
+          <label class="apanel__accept">
+            <input v-model="form.acceptData" type="checkbox" class="apanel__accept-box" />
+            <span>
+              J'accepte le traitement de mes données personnelles par PromoDev, uniquement dans le cadre du
+              jeu, conformément à la
+              <RouterLink to="/confidentialite" target="_blank">politique de confidentialité</RouterLink>.
+              <span class="req" aria-hidden="true">*</span>
+            </span>
+          </label>
+          <!-- Facultative, et visiblement à part : c'est un opt-in marketing
+               distinct, s'inscrire au jeu ne doit jamais valoir consentement à
+               la prospection. Pas d'astérisque, pas de blocage du bouton. -->
+          <label class="apanel__accept apanel__accept--opt">
+            <input v-model="form.acceptMarketing" type="checkbox" class="apanel__accept-box" />
+            <span>
+              Je souhaite recevoir par e-mail les actualités, offres commerciales et invitations de
+              PromoDev. Je pourrai me désinscrire à tout moment.
+            </span>
+          </label>
         </template>
 
         <button
           class="btn btn--lg btn--block"
           type="submit"
-          :disabled="loading || (mode === 'register' && !form.acceptRules)"
+          :disabled="loading || (mode === 'register' && (!form.acceptRules || !form.acceptData))"
         >
           <span v-if="loading" class="spin" aria-hidden="true"></span>
           {{
@@ -301,13 +323,12 @@ async function submit() {
         </p>
       </form>
 
-      <!-- La société est obligatoire (c'est la qualification du prospect) mais
-           c'est aussi la donnée qu'on hésite le plus à donner. Dire tout de
-           suite où elle n'ira pas lève le frein. Formulation vérifiée contre le
-           code, pas promise à la légère : l'agrégation du classement ne remonte
-           que `pseudo` et `avatar` (routes/leaderboard.js), et la société n'est
-           affichée qu'au joueur lui-même, dans sa propre fiche (PlayerSheet).
-           D'où « aux autres joueurs » et non « jamais » tout court. -->
+      <!-- La société est facultative, mais celui qui la donne hésite : dire tout
+           de suite où elle n'ira pas lève le frein. Formulation vérifiée contre
+           le code, pas promise à la légère : l'agrégation du classement ne
+           remonte que `pseudo` et `avatar` (routes/leaderboard.js), et la société
+           n'est affichée qu'au joueur lui-même, dans sa propre fiche
+           (PlayerSheet). D'où « aux autres joueurs » et non « jamais » tout court. -->
       <p v-if="mode === 'register'" class="apanel__privacy">
         <ShieldCheck :size="15" class="apanel__privacy-ico" aria-hidden="true" />
         <span>Votre raison sociale n'est jamais affichée aux autres joueurs : dans le classement, seul votre pseudo apparaît.</span>
@@ -455,6 +476,14 @@ async function submit() {
   margin-top: 1px;
   accent-color: var(--coral);
   cursor: pointer;
+}
+/* La case marketing est facultative : séparée par un filet et un ton plus doux,
+   pour qu'on la distingue au premier regard des deux cases obligatoires. */
+.apanel__accept--opt {
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(43, 45, 90, 0.1);
+  color: var(--ink-soft);
 }
 .apanel__forgot {
   text-align: center;

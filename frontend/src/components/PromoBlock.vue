@@ -23,7 +23,7 @@ const MAILTO = 'mailto:contact@promo.dev?subject=' + encodeURIComponent("Le Jeu 
         Promodev imagine et opère des opérations promotionnelles — comme celle-ci,
         avec ses 600 € de cartes cadeaux à gagner.
       </p>
-      <p class="promo__ask">Une idée d'opération ? Parlons-en.</p>
+      <p class="promo__ask">Une question liée au Jeu de l'Été, une idée d'opération ? Parlons-en.</p>
       <div class="promo__actions">
         <a class="btn btn--sea promo__cta" :href="MAILTO">
           <Mail :size="16" aria-hidden="true" /> contact@promo.dev
