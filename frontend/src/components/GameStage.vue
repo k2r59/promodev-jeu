@@ -31,6 +31,11 @@ const floatings = ref([])
 const result = ref(null)
 const submitting = ref(false)
 const submitError = ref('')
+// Jeton de la partie en cours, remis par le serveur à /game/start. C'est lui qui
+// prouve, à la soumission, qu'une vraie partie a été ouverte et a duré son temps.
+const sessionToken = ref('')
+const startError = ref('')
+const starting = ref(false)
 
 let timerId = null
 let floatId = 0
@@ -57,6 +62,22 @@ function onFloating({ text }) {
 
 async function startGame() {
   if (!auth.isAuth) return emit('auth')
+  if (starting.value) return
+  // On ouvre la session AVANT de lancer quoi que ce soit : c'est elle qui
+  // horodate le départ côté serveur, et sans jeton valide le score serait
+  // refusé à la fin. Si l'ouverture échoue, on ne lance pas une partie qui ne
+  // pourra pas être enregistrée — on le dit et on reste sur l'intro.
+  starting.value = true
+  startError.value = ''
+  try {
+    const res = await api('/game/start', { method: 'POST' })
+    sessionToken.value = res.sessionToken
+  } catch (e) {
+    startError.value = e.message || 'Impossible de démarrer la partie. Réessayez.'
+    starting.value = false
+    return
+  }
+  starting.value = false
   // Avant le décompte, pas après : c'est l'accusé de réception du clic. Les
   // trois bips du décompte viennent par-dessus, ils ne se marchent pas dessus.
   sfx.jouer()
@@ -91,13 +112,17 @@ async function submitScore() {
   submitError.value = ''
   try {
     const payload = {
+      // Le jeton lie ce résultat à la session ouverte au départ. La durée n'est
+      // plus envoyée : le serveur la mesure lui-même entre /start et ici.
+      sessionToken: sessionToken.value,
       score: live.score,
       maxCombo: live.maxCombo,
       boostersUsed: live.boostersUsed,
-      matches: live.matches,
-      durationSec: GAME_SECONDS
+      matches: live.matches
     }
     const res = await api('/game/session', { method: 'POST', body: payload })
+    // Le jeton ne vaut qu'une fois : on l'oublie, la prochaine partie en aura un neuf.
+    sessionToken.value = ''
     auth.setUser(res.user)
     result.value = res
     if (res.gained && (res.gained.gems > 0 || res.gained.newBadges?.length)) sfx.reward()
@@ -196,7 +221,10 @@ onUnmounted(() => clearInterval(timerId))
             2 minutes chrono pour aligner un max de tuiles estivales et exploser votre score !
             <template v-if="!auth.isAuth"><br />Créez votre compte en 30 secondes pour lancer votre première partie.</template>
           </p>
-          <button class="btn btn--lg btn--leaf" @click="startGame">▶ C'est parti !</button>
+          <p v-if="startError" class="overlay__err">{{ startError }}</p>
+          <button class="btn btn--lg btn--leaf" :disabled="starting" @click="startGame">
+            <span v-if="starting" class="spin" aria-hidden="true"></span>{{ starting ? 'Un instant…' : "▶ C'est parti !" }}
+          </button>
         </div>
       </div>
 
@@ -418,6 +446,11 @@ onUnmounted(() => clearInterval(timerId))
 }
 .overlay__card p {
   margin: 0 0 18px;
+}
+.overlay__err {
+  color: #c0304a;
+  font-weight: 700;
+  font-size: 0.9rem;
 }
 .final-score {
   font-size: 2.6rem;
