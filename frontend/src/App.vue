@@ -136,11 +136,10 @@ function logout() {
       </RouterView>
     </main>
 
-    <FeaturesBar v-if="!isGameScreen" />
-
     <!-- Liens légaux, permanents : l'art. 15 du règlement impose qu'il reste
          consultable pendant toute l'opération. Discrets, mais toujours là.
-         Masqués sur l'écran de jeu, cadré au pixel. -->
+         Placés AVANT le bandeau d'arguments (FeaturesBar, collé en bas) pour
+         passer au-dessus de lui, pas en dessous. Masqués sur l'écran de jeu. -->
     <footer v-if="!isGameScreen" class="legalbar">
       <RouterLink to="/mentions-legales">Mentions légales</RouterLink>
       <span aria-hidden="true">·</span>
@@ -148,6 +147,8 @@ function logout() {
       <span aria-hidden="true">·</span>
       <RouterLink to="/confidentialite">Confidentialité</RouterLink>
     </footer>
+
+    <FeaturesBar v-if="!isGameScreen" />
 
     <!-- Barre de navigation mobile -->
     <nav class="bottomnav">
