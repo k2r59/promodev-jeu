@@ -82,6 +82,18 @@ const forgotLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Trop de demandes de réinitialisation. Réessayez dans une heure.' }
 })
+// /register révèle si un e-mail (ou un pseudo) est déjà pris — la contrepartie
+// d'un message clair « ce compte existe déjà ». On ne peut pas le supprimer sans
+// dégrader l'inscription, mais on bride l'énumération de MASSE : 15 tentatives
+// par heure et par IP suffisent à un humain qui s'inscrit, pas à qui sonde des
+// milliers d'adresses.
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Trop de tentatives d’inscription. Réessayez dans un moment.' }
+})
 
 app.get('/api/health', (req, res) => res.json({ ok: true, ts: Date.now() }))
 // Ce que le front doit savoir AVANT d'afficher le formulaire. Le lien « mot de
@@ -90,6 +102,7 @@ app.get('/api/health', (req, res) => res.json({ ok: true, ts: Date.now() }))
 app.get('/api/config', (req, res) => res.json({ passwordResetEnabled: config.mail.enabled }))
 app.use('/api/auth/login', loginLimiter)
 app.use('/api/auth/forgot', forgotLimiter)
+app.use('/api/auth/register', registerLimiter)
 app.use('/api/auth', authLimiter, authRoutes)
 app.use('/api/game', gameRoutes)
 app.use('/api/leaderboard', leaderboardRoutes)

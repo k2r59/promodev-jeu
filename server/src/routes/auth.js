@@ -215,6 +215,9 @@ router.post('/reset', async (req, res) => {
     await user.setPassword(password)
     // Usage unique : consommé dans la foulée, le même lien ne rejouera pas.
     user.clearPasswordReset()
+    // Évince les jetons émis avant ce reset (cf. requireAuth). Le jeton rendu
+    // juste après, lui, est postérieur : il survit.
+    user.passwordChangedAt = new Date()
     await user.save()
 
     // Connecté dans la foulée : il vient de prouver qu'il possède l'adresse et

@@ -32,6 +32,11 @@ const userSchema = new Schema(
     },
     passwordHash: { type: String, required: true },
 
+    // Instant du dernier changement de mot de passe (reset). requireAuth rejette
+    // tout jeton émis AVANT : un reset évince donc un jeton volé, sinon il
+    // restait valable 30 jours malgré le changement. null = jamais changé.
+    passwordChangedAt: { type: Date, default: null },
+
     // Réinitialisation en cours. `null` au repos plutôt qu'absent : deux comptes
     // sans reset ne doivent pas se retrouver à partager une valeur qui pourrait
     // matcher une recherche. Jamais exposés par toPublic().
@@ -102,6 +107,13 @@ userSchema.index(
   { pseudo: 1 },
   { unique: true, collation: { locale: 'fr', strength: 2 }, name: 'pseudo_unique_ci' }
 )
+
+// Rang au classement GÉNÉRAL sans scanner les parties : le meilleur score de
+// chaque joueur vit déjà ici (bestScoreAllTime), donc son rang = 1 + le nombre
+// de comptes qui font mieux, un count sur cet index (une entrée par joueur, pas
+// de doublons à dédupliquer). Remplace l'agrégation des Scores, qui balayait
+// presque toute la collection pour un joueur au score bas.
+userSchema.index({ bestScoreAllTime: -1 })
 
 userSchema.methods.setPassword = async function (plain) {
   this.passwordHash = await bcrypt.hash(plain, 10)

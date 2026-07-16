@@ -3,6 +3,7 @@ import mongoose from 'mongoose'
 import rateLimit from 'express-rate-limit'
 import * as Sentry from '@sentry/node'
 import { Score } from '../models/Score.js'
+import { User } from '../models/User.js'
 import { optionalUid } from '../middleware/auth.js'
 import { config } from '../config.js'
 
@@ -103,6 +104,22 @@ async function getBoardCached(period) {
 // font mieux. C'est ce qui garde « je viens de scorer, je vois mon vrai rang »
 // exact à la seconde, même quand le top-100 vient du cache.
 async function playerRank(period, userId) {
+  // Classement GÉNÉRAL : le meilleur score de chaque joueur est déjà sur son
+  // compte (bestScoreAllTime). Le rang = 1 + le nombre de comptes qui font mieux,
+  // un count sur l'index bestScoreAllTime — pas de balayage des parties, pas de
+  // déduplication (une entrée par joueur). C'est le cas le plus consulté et le
+  // seul qui accumulait TOUTE la collection ; il devient un count indexé.
+  if (period === 'all') {
+    const u = await User.findById(userId, 'pseudo avatar bestScoreAllTime')
+    if (!u || !u.bestScoreAllTime) return null
+    const above = await User.countDocuments({ bestScoreAllTime: { $gt: u.bestScoreAllTime } })
+    return { rank: above + 1, userId: u._id, pseudo: u.pseudo, avatar: u.avatar, score: u.bestScoreAllTime }
+  }
+
+  // Fenêtres jour/semaine/mois : pas de « meilleur score par période » stocké,
+  // on agrège les parties. Acceptable : la fenêtre est bornée dans le temps (bien
+  // moins de données que le général), et l'appel est déjà réservé au joueur lui-
+  // même et limité en fréquence. Le $match sur (createdAt, score) suit l'index.
   const match = periodMatch(period)
   const mine = await Score.aggregate([
     { $match: { ...match, user: new mongoose.Types.ObjectId(userId) } },
@@ -110,9 +127,6 @@ async function playerRank(period, userId) {
   ])
   if (!mine.length) return null
   const myBest = mine[0].score
-  // Joueurs distincts ayant un meilleur score STRICTEMENT supérieur : le $match
-  // sur score s'appuie sur l'index composite (createdAt, score), il ne balaie
-  // pas toute la collection.
   const above = await Score.aggregate([
     { $match: { ...match, score: { $gt: myBest } } },
     { $group: { _id: '$user' } },

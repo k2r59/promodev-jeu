@@ -25,6 +25,12 @@ export async function requireAuth(req, res, next) {
     const user = await User.findById(payload.uid)
     if (!user) return res.status(401).json({ error: 'Utilisateur introuvable' })
 
+    // Révocation par changement de mot de passe : un jeton émis AVANT le dernier
+    // reset ne vaut plus. On compare en secondes (iat du JWT est en secondes) :
+    // le jeton neuf émis à la seconde du reset n'est pas rejeté, les antérieurs si.
+    if (user.passwordChangedAt && payload.iat < Math.floor(user.passwordChangedAt.getTime() / 1000))
+      return res.status(401).json({ error: 'Session expirée, reconnectez-vous.' })
+
     req.user = user
     next()
   } catch {
