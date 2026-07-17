@@ -132,7 +132,7 @@ onMounted(async () => {
         <p>
           Vous disposez de droits d'accès, de rectification, d'effacement, de limitation, d'opposition et
           de portabilité de vos données. Vous pouvez les exercer en écrivant à
-          <a href="mailto:hello@promo.dev">hello@promo.dev</a>, en précisant l'objet de votre demande.
+          <a href="mailto:dpo@promo.dev">dpo@promo.dev</a>, en précisant l'objet de votre demande.
           Vous pouvez également adresser une réclamation à la Commission nationale de l'informatique et
           des libertés (CNIL).
         </p>
