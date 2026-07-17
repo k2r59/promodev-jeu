@@ -143,7 +143,7 @@ function logout() {
     <footer v-if="!isGameScreen" class="legalbar">
       <RouterLink to="/mentions-legales">Mentions légales</RouterLink>
       <span aria-hidden="true">·</span>
-      <RouterLink to="/reglement">Règlement</RouterLink>
+      <a href="/reglement-jeu-de-l-ete-promodev-2026.pdf" target="_blank" rel="noopener">Règlement</a>
       <span aria-hidden="true">·</span>
       <RouterLink to="/confidentialite">Confidentialité</RouterLink>
     </footer>

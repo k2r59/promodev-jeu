@@ -76,7 +76,7 @@ onMounted(async () => {
         <h2>Le Jeu de l'Été</h2>
         <p>
           Le Jeu de l'Été PromoDev est un jeu promotionnel gratuit et sans obligation d'achat, régi par
-          son <RouterLink to="/reglement">règlement</RouterLink>. Il n'est ni organisé, ni parrainé, ni
+          son <a href="/reglement-jeu-de-l-ete-promodev-2026.pdf" target="_blank" rel="noopener">règlement</a>. Il n'est ni organisé, ni parrainé, ni
           administré par LinkedIn.
         </p>
       </section>
@@ -145,7 +145,7 @@ onMounted(async () => {
 
       <p class="legal__foot">
         Pour les règles complètes de l'opération, consultez le
-        <RouterLink to="/reglement">règlement du Jeu</RouterLink>.
+        <a href="/reglement-jeu-de-l-ete-promodev-2026.pdf" target="_blank" rel="noopener">règlement du Jeu</a>.
       </p>
     </div>
   </div>

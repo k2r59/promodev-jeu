@@ -59,7 +59,7 @@ const STEPS = [
           <span class="note__ico" aria-hidden="true">i</span>
           <span>
             Chacun garde une chance réelle : le classement départage les finalistes, le tirage fait le
-            reste. Voir le <RouterLink to="/reglement">règlement</RouterLink> pour les modalités complètes.
+            reste. Voir le <a href="/reglement-jeu-de-l-ete-promodev-2026.pdf" target="_blank" rel="noopener">règlement</a> pour les modalités complètes.
           </span>
         </p>
       </section>

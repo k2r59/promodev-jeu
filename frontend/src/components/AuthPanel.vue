@@ -273,7 +273,7 @@ async function submit() {
             <span>
               Je certifie être âgé(e) de 18 ans ou plus, remplir les conditions de participation et avoir lu
               et accepté sans réserve le
-              <RouterLink to="/reglement" target="_blank">règlement du Jeu de l'Été PromoDev</RouterLink>.
+              <a href="/reglement-jeu-de-l-ete-promodev-2026.pdf" target="_blank" rel="noopener">règlement du Jeu de l'Été PromoDev</a>.
               <span class="req" aria-hidden="true">*</span>
             </span>
           </label>

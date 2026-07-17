@@ -8,8 +8,12 @@ import RewardsView from './views/RewardsView.vue'
 import HelpView from './views/HelpView.vue'
 import ResetPasswordView from './views/ResetPasswordView.vue'
 import MentionsLegalesView from './views/MentionsLegalesView.vue'
-import ReglementView from './views/ReglementView.vue'
 import DotationView from './views/DotationView.vue'
+
+// Le règlement n'est plus une page HTML mais un PDF téléchargeable, servi
+// depuis /public. Un document unique = une seule source de vérité, sans risque
+// de divergence entre le texte affiché et le règlement officiel.
+const REGLEMENT_PDF = '/reglement-jeu-de-l-ete-promodev-2026.pdf'
 
 // Le jeu et le formulaire vivent désormais dans la colonne centrale de l'accueil :
 // ces deux URL n'ont plus d'écran propre mais restent valides (liens, favoris).
@@ -29,7 +33,18 @@ const routes = [
   // manquant, c'est pourquoi elle est déclarée avant.
   { path: '/reinitialiser', name: 'reset-password', component: ResetPasswordView },
   { path: '/mentions-legales', name: 'legal', component: MentionsLegalesView },
-  { path: '/reglement', name: 'rules', component: ReglementView },
+  // Ancienne page /reglement : on renvoie vers le PDF pour ne pas casser les
+  // favoris ni les liens déjà diffusés. beforeEnter redirige avant tout rendu ;
+  // le composant vide n'est jamais affiché.
+  {
+    path: '/reglement',
+    name: 'rules',
+    component: { render: () => null },
+    beforeEnter() {
+      window.location.href = REGLEMENT_PDF
+      return false
+    }
+  },
   // Le texte RGPD parle de « politique de confidentialité » : cette URL parlante
   // mène à sa section dans les mentions légales, plutôt que de dupliquer la page.
   { path: '/confidentialite', redirect: { name: 'legal', hash: '#confidentialite' } },
