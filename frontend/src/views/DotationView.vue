@@ -1,14 +1,14 @@
 <script setup>
-// La dotation : 600 € de cartes cadeaux multi-enseignes, en podium à trois
-// gagnants (300 / 200 / 100). Structure déduite des trois valeurs distinctes
+// La dotation : 500 € de cartes cadeaux multi-enseignes, en podium à trois
+// gagnants (250 / 150 / 100). Structure déduite des trois valeurs distinctes
 // fournies — trois cartes de montants différents = trois rangs, pas un lot
 // unique. Le nombre de gagnants du règlement (art. 7) suit cette lecture.
 import { Gift } from 'lucide-vue-next'
 import imgCoffre from '../assets/features/recompenses.png'
 
 const PRIZES = [
-  { rank: 1, medal: '🥇', amount: 300, label: '1ᵉʳ prix' },
-  { rank: 2, medal: '🥈', amount: 200, label: '2ᵉ prix' },
+  { rank: 1, medal: '🥇', amount: 250, label: '1ᵉʳ prix' },
+  { rank: 2, medal: '🥈', amount: 150, label: '2ᵉ prix' },
   { rank: 3, medal: '🥉', amount: 100, label: '3ᵉ prix' }
 ]
 
@@ -26,7 +26,7 @@ const STEPS = [
         <span class="dot__badge" aria-hidden="true"><Gift :size="26" /></span>
         <div>
           <div class="pill pill--tag">🎁 La dotation</div>
-          <h1>600 € de cartes cadeaux à gagner</h1>
+          <h1>500 € de cartes cadeaux à gagner</h1>
           <p class="dot__sub">Des e-cartes cadeaux multi-enseignes, à dépenser où vous voulez.</p>
         </div>
       </div>
@@ -43,7 +43,7 @@ const STEPS = [
 
       <p class="dot__total">
         <img class="dot__coffre" :src="imgCoffre" alt="" aria-hidden="true" />
-        Soit <b>600 €</b> de cartes cadeaux mis en jeu au total.
+        Soit <b>500 €</b> de cartes cadeaux mis en jeu au total.
       </p>
 
       <section class="dot__how">

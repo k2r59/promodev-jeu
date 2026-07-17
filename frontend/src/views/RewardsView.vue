@@ -52,7 +52,7 @@ onMounted(load)
     <RouterLink to="/dotation" class="grandprize card">
       <div class="grandprize__left">
         <div class="pill pill--tag">🏅 Récompense finale</div>
-        <div class="grandprize__amount">600 €</div>
+        <div class="grandprize__amount">500 €</div>
         <p>de cartes cadeaux multi-enseignes à gagner.</p>
         <img class="grandprize__coffre" :src="imgCoffre" alt="" aria-hidden="true" />
       </div>
@@ -67,7 +67,7 @@ onMounted(load)
         </ol>
         <p class="note">
           <span class="note__ico" aria-hidden="true">i</span>
-          <span>Trois cartes à gagner (300 / 200 / 100 €). Voir le détail de la dotation →</span>
+          <span>Trois cartes à gagner (250 / 150 / 100 €). Voir le détail de la dotation →</span>
         </p>
       </div>
     </RouterLink>

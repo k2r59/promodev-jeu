@@ -10,7 +10,7 @@ const features = [
   { img: imgSimple, title: 'Simple & fun', desc: 'Facile à jouer, difficile à lâcher !' },
   { img: imgNiveaux, title: 'Des niveaux', desc: 'Toujours plus de défis et de surprises !' },
   { img: imgPourTous, title: 'Pour tous', desc: 'Jouez quand vous voulez, où vous voulez !' },
-  { img: imgRecompenses, title: 'De super récompenses', desc: 'Des points, des badges et peut-être 600 € de cartes cadeaux à la clé !' }
+  { img: imgRecompenses, title: 'De super récompenses', desc: 'Des points, des badges et peut-être 500 € de cartes cadeaux à la clé !' }
 ]
 </script>
 

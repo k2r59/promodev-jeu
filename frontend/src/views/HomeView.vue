@@ -24,7 +24,7 @@ const showAuth = computed(() => !auth.isAuth && ui.authFormOpen)
 
 // Le plateau en vitrine, sur grand écran seulement : il y tient à côté du
 // cadeau et donne envie avant qu'on réclame un compte. En portrait il prendrait
-// tout l'écran et repousserait l'accroche des 600 € hors de vue — la page
+// tout l'écran et repousserait l'accroche des 500 € hors de vue — la page
 // déconnectée y reste une page d'accroche.
 const showBoard = computed(() => auth.isAuth || !ui.portrait)
 const ouvreFormulaire = () => (ui.authFormOpen = true)
@@ -198,13 +198,13 @@ onUnmounted(() => ro?.disconnect())
         <img
           class="prize__img"
           :src="imgPrize"
-          alt="À gagner : 600 € de cartes cadeaux multi-enseignes !"
+          alt="À gagner : 500 € de cartes cadeaux multi-enseignes !"
         />
         <RouterLink v-if="auth.isAuth" to="/dotation" class="prize__cta">
-          <span class="sr-only">En savoir plus sur les 600 € à gagner</span>
+          <span class="sr-only">En savoir plus sur les 500 € à gagner</span>
         </RouterLink>
         <button v-else class="prize__cta" @click="ouvreFormulaire">
-          <span class="sr-only">Créer un compte pour tenter de gagner les 600 €</span>
+          <span class="sr-only">Créer un compte pour tenter de gagner les 500 €</span>
         </button>
       </div>
 
@@ -612,7 +612,7 @@ onUnmounted(() => ro?.disconnect())
 /* Portrait. Deux écrans très différents partagent cette route :
    - connecté (.app-shell--game) : c'est LE jeu, cadré sur la fenêtre ;
    - déconnecté : c'est un formulaire d'inscription, donc une page qui défile,
-     et le cadeau des 600 € reste — c'est lui qui donne envie de s'inscrire.
+     et le cadeau des 500 € reste — c'est lui qui donne envie de s'inscrire.
    D'où le préfixe .app-shell--game : sans lui, le formulaire héritait d'une
    hauteur fixe et ses derniers champs sortaient de l'écran. */
 @media (orientation: portrait) and (max-width: 1100px) {

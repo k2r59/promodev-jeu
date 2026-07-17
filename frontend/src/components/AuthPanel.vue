@@ -127,7 +127,7 @@ async function submit() {
         <p class="muted">
           {{
             mode === 'register'
-              ? 'Créez votre compte pour jouer, gagner des badges et tenter les 600 € de cartes cadeaux.'
+              ? 'Créez votre compte pour jouer, gagner des badges et tenter les 500 € de cartes cadeaux.'
               : mode === 'forgot'
                 ? 'Indiquez l’e-mail de votre compte : nous vous enverrons un lien pour choisir un nouveau mot de passe.'
                 : 'Connectez-vous pour reprendre votre progression.'

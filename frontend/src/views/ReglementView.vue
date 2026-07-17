@@ -1,7 +1,7 @@
 <script setup>
 // Règlement complet du Jeu. Tout est tranché et renseigné : dates (op. 1er→31
-// août 2026, tirage le 4 septembre), dotation (3 cartes cadeaux 300/200/100 =
-// 600 €), organisateur (PROMODEV, capital 321 000 €, RCS Marseille 890 559 883).
+// août 2026, tirage le 4 septembre), dotation (3 cartes cadeaux 250/150/100 =
+// 500 €), organisateur (PROMODEV, capital 321 000 €, RCS Marseille 890 559 883).
 // Plus aucun marqueur 【】. Seules la date de rédaction (16 juillet 2026) et la
 // version (1) sont à confirmer par l'organisateur si elles doivent changer.
 import { Scale } from 'lucide-vue-next'
@@ -113,7 +113,7 @@ import { Scale } from 'lucide-vue-next'
           tirage au sort ; si moins de cent participants remplissent les conditions, le tirage portera sur
           l'ensemble des participants valablement classés. Le tirage désignera <b>trois (3) gagnants</b> et
           trois gagnants suppléants par lot, au moyen d'un procédé informatique aléatoire ; les gagnants se
-          voient attribuer, dans l'ordre du tirage, la carte cadeau de 300 €, celle de 200 €, puis celle de
+          voient attribuer, dans l'ordre du tirage, la carte cadeau de 250 €, celle de 150 €, puis celle de
           100 €. Une seule dotation par personne et par foyer. Figurer parmi les cent meilleurs ne garantit
           pas l'obtention d'un lot.
         </p>
@@ -123,9 +123,9 @@ import { Scale } from 'lucide-vue-next'
         <h2>Article 8 — Dotation</h2>
         <p>
           Le Jeu est doté des trois lots suivants&nbsp;: une e-carte cadeau dématérialisée
-          «&nbsp;<b>Ma Carte Cadeau</b>&nbsp;» d'une valeur faciale de <b>300&nbsp;€</b> ; une deuxième
-          d'une valeur faciale de <b>200&nbsp;€</b> ; une troisième d'une valeur faciale de
-          <b>100&nbsp;€</b>. La valeur faciale totale des dotations mises en jeu s'élève à <b>600&nbsp;€</b>.
+          «&nbsp;<b>Ma Carte Cadeau</b>&nbsp;» d'une valeur faciale de <b>250&nbsp;€</b> ; une deuxième
+          d'une valeur faciale de <b>150&nbsp;€</b> ; une troisième d'une valeur faciale de
+          <b>100&nbsp;€</b>. La valeur faciale totale des dotations mises en jeu s'élève à <b>500&nbsp;€</b>.
           Le lot ne peut donner lieu à aucune contrepartie financière, remboursement, échange contre des
           espèces, ni remplacement, sauf décision expresse de l'Organisateur. En cas d'indisponibilité,
           l'Organisateur pourra remplacer le lot par un lot de valeur équivalente ou supérieure.
